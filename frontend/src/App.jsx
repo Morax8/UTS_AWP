@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div>
-      <h1>Pesan dari Backend:</h1>
+      <h1>Pesan dari Backendffyff:</h1>
       <p>{message}</p>
     </div>
   );
