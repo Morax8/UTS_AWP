@@ -63,7 +63,7 @@ function Navbar() {
                   <NavLink to="/menu" className={getNavLinkClass}>
                     Menu
                   </NavLink>
-                  <NavLink to="/track-order" className={getNavLinkClass}>
+                  <NavLink to="/track" className={getNavLinkClass}>
                     Lacak Pesanan
                   </NavLink>
                   <NavLink to="/faq" className={getNavLinkClass}>
