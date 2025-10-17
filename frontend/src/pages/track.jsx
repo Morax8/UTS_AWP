@@ -14,49 +14,39 @@ export default function TrackPage() {
   const [search, setSearch] = useState("");
   const [orderData, setOrderData] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // State untuk loading
 
-  //ini data dummy zi blom ada databsenya, bisa diganti ntr ama fetch ke backend
-  const mockOrders = [
-    {
-      id: "ORD001",
-      name: "Budi Santoso",
-      status: "Dikirim",
-      items: ["Nasi Kuning Komplit", "Rendang Sapi Premium"],
-      total: 80000,
-      estimated: "14:30 WIB",
-    },
-    {
-      id: "ORD002",
-      name: "Siti Aminah",
-      status: "Diproses",
-      items: ["Soto Ayam Spesial"],
-      total: 30000,
-      estimated: "15:00 WIB",
-    },
-    {
-      id: "ORD003",
-      name: "Andi Wijaya",
-      status: "Selesai",
-      items: ["Ayam Goreng Kriuk", "Sambal Terasi"],
-      total: 25000,
-      estimated: "13:00 WIB",
-    },
-  ];
-
-  const handleSearch = (e) => {
+  // Fungsi handleSearch diubah untuk mengambil data dari API
+  const handleSearch = async (e) => {
     e.preventDefault();
-    const foundOrder = mockOrders.find(
-      (order) =>
-        order.id.toLowerCase() === search.toLowerCase() ||
-        order.name.toLowerCase().includes(search.toLowerCase())
-    );
+    if (!search) {
+      setError("Kolom pencarian tidak boleh kosong.");
+      return;
+    }
 
-    if (foundOrder) {
-      setOrderData(foundOrder);
-      setError("");
-    } else {
+    setLoading(true);
+    setOrderData(null);
+    setError("");
+
+    try {
+      // Gunakan path relatif agar Vite Proxy bekerja saat development
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(
+        `${apiUrl}/api/orders/track?search=${encodeURIComponent(search)}`
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Ambil pesan error dari backend
+        throw new Error(result.message || "Gagal mencari pesanan.");
+      }
+
+      setOrderData(result.data);
+    } catch (err) {
       setOrderData(null);
-      setError("Pesanan tidak ditemukan. Coba periksa kembali kode atau nama Anda.");
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,9 +54,12 @@ export default function TrackPage() {
     <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
       {/* Header Section */}
       <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-16 text-center shadow-md">
-        <h1 className="text-5xl font-bold mb-3 animate-fade-in">Lacak Pesanan</h1>
+        <h1 className="text-5xl font-bold mb-3 animate-fade-in">
+          Lacak Pesanan
+        </h1>
         <p className="text-lg text-gray-700">
-          Masukkan <strong>kode pesanan</strong> atau <strong>nama Anda</strong> untuk melihat status.
+          Masukkan <strong>kode pesanan</strong> atau <strong>nama Anda</strong>{" "}
+          untuk melihat status.
         </p>
       </section>
 
@@ -82,9 +75,16 @@ export default function TrackPage() {
           />
           <button
             type="submit"
-            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-5 py-3 rounded-lg flex items-center gap-2 transition"
+            disabled={loading} // Tombol disable saat loading
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-5 py-3 rounded-lg flex items-center gap-2 transition disabled:bg-gray-400"
           >
-            <FaSearch /> Cari
+            {loading ? (
+              "Mencari..."
+            ) : (
+              <>
+                <FaSearch /> Cari
+              </>
+            )}
           </button>
         </form>
       </div>
@@ -96,28 +96,29 @@ export default function TrackPage() {
         {orderData && (
           <div className="bg-white rounded-xl shadow-md p-8 mt-6 animate-fade-in">
             <h2 className="text-2xl font-bold mb-4 text-yellow-600">
-              Detail Pesanan #{orderData.id}
+              Detail Pesanan #{orderData.order_code}
             </h2>
 
-            {/* Status Icon */}
             <div className="flex justify-center items-center mb-6">
               {orderData.status === "Selesai" ? (
                 <FaCheckCircle className="text-green-500 text-4xl" />
-              ) : orderData.status === "Dikirim" ? (
+              ) : orderData.status === "Dalam Pengantaran" ? (
                 <FaTruck className="text-blue-500 text-4xl" />
               ) : (
                 <FaBox className="text-yellow-500 text-4xl" />
               )}
             </div>
 
-            <p className="text-lg font-semibold mb-2">Nama Pemesan: {orderData.name}</p>
+            <p className="text-lg font-semibold mb-2">
+              Nama Pemesan: {orderData.customer_name}
+            </p>
             <p className="text-gray-700 mb-3">
               Status Pesanan:{" "}
               <span
                 className={`font-semibold ${
                   orderData.status === "Selesai"
                     ? "text-green-600"
-                    : orderData.status === "Dikirim"
+                    : orderData.status === "Dalam Pengantaran"
                     ? "text-blue-600"
                     : "text-yellow-600"
                 }`}
@@ -129,24 +130,25 @@ export default function TrackPage() {
             <div className="border-t border-gray-200 my-4"></div>
 
             <h3 className="text-lg font-bold mb-2">Daftar Pesanan:</h3>
-            <ul className="text-gray-700 mb-4">
+            <ul className="text-gray-700 mb-4 list-disc list-inside text-left inline-block">
               {orderData.items.map((item, i) => (
-                <li key={i}>🍱 {item}</li>
+                <li key={i}>
+                  {item.quantity}x {item.menu_name}
+                </li>
               ))}
             </ul>
 
             <p className="text-lg font-bold text-yellow-600">
-              Total: Rp{orderData.total.toLocaleString("id-ID")}
+              Total: Rp{orderData.total_amount.toLocaleString("id-ID")}
             </p>
 
-            <p className="text-sm text-gray-500 mt-3">
+            {/* <p className="text-sm text-gray-500 mt-3">
               Estimasi Selesai: {orderData.estimated}
-            </p>
+            </p> */}
           </div>
         )}
       </div>
 
-      {/* Default View (belum cari) */}
       {!orderData && !error && (
         <div className="text-center mt-20 text-gray-500 animate-fade-in">
           <FaBox className="text-6xl text-gray-300 mx-auto mb-4" />
