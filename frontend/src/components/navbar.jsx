@@ -25,21 +25,22 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-white/80 backdrop-blur-md shadow-md sticky top-0 z-50 transition-all duration-300 hover:shadow-lg animate-scale-up">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Bagian Kiri: Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold text-gray-800">
-              KateringKu
+            <Link
+              to="/"
+              className="text-2xl font-extrabold text-yellow-600 tracking-tight hover:text-yellow-500 transition-colors duration-300"
+            >
+              🍽️ KateringRassya
             </Link>
           </div>
 
-          {/* Bagian Tengah: Menu Navigasi */}
+          {/* 🔹 Tengah: Menu Navigasi */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-10 flex items-baseline space-x-6">
               {isLoggedIn ? (
-                /* --- TAMPILAN UNTUK ADMIN YANG SUDAH LOGIN --- */
                 <>
                   <NavLink to="/admin/dashboard" className={getNavLinkClass}>
                     Dashboard
@@ -58,7 +59,6 @@ function Navbar() {
                   </NavLink>
                 </>
               ) : (
-                /* --- TAMPILAN UNTUK PENGUNJUNG BIASA --- */
                 <>
                   <NavLink to="/menu" className={getNavLinkClass}>
                     Menu
@@ -69,27 +69,35 @@ function Navbar() {
                   <NavLink to="/faq" className={getNavLinkClass}>
                     FAQ
                   </NavLink>
+                  <NavLink to="/contact-us" className={getNavLinkClass}>
+                    Contact
+                  </NavLink>
                 </>
               )}
             </div>
           </div>
 
-          {/* Bagian Kanan: Info User atau Tombol Login */}
+          {/* 🔹 Kanan: Login / User Info */}
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
               {isLoggedIn ? (
                 <div className="flex items-center space-x-4">
-                  <span className="text-gray-600">Halo, {user.name}</span>
+                  <span className="text-gray-700 font-medium animate-fade-in">
+                    👋 Halo,{" "}
+                    <span className="font-semibold text-yellow-700">
+                      {user.name}
+                    </span>
+                  </span>
                   <button
                     onClick={handleLogout}
-                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 hover:shadow-md transition-all duration-300"
                   >
                     Sign Out
                   </button>
                 </div>
               ) : (
                 <Link to="/login">
-                  <button className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  <button className="px-4 py-2 text-sm font-semibold text-white bg-yellow-500 rounded-lg shadow-sm hover:bg-yellow-600 hover:shadow-md transition-all duration-300">
                     Admin Login
                   </button>
                 </Link>
@@ -97,9 +105,9 @@ function Navbar() {
             </div>
           </div>
 
-          {/* Hamburger Menu untuk Mobile (Belum fungsional, hanya tampilan) */}
+          {/* 🔹 Hamburger Menu untuk Mobile */}
           <div className="-mr-2 flex md:hidden">
-            <button className="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+            <button className="bg-yellow-500 inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-all duration-300">
               <svg
                 className="h-6 w-6"
                 stroke="currentColor"
