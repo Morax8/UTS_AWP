@@ -32,6 +32,23 @@ const getAllMenuItems = async (req, res) => {
   }
 };
 
+const getFeaturedMenuItems = async (req, res) => {
+  try {
+    const query = `
+      SELECT id, name, description, image_url 
+      FROM menu_items
+      WHERE is_active = TRUE AND is_featured = TRUE
+      ORDER BY id DESC
+      LIMIT 3;
+    `;
+    const [rows] = await db.query(query);
+    res.status(200).json({ success: true, data: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
 module.exports = {
   getAllMenuItems,
+  getFeaturedMenuItems,
 };

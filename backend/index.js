@@ -6,6 +6,7 @@ const db = require("./config/db");
 // Import Routes
 const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 // const pesananRoutes = require('./routes/pesananRoutes'); // Nanti diaktifkan jika sudah dibuat
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json());
 // Gunakan Routes
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/contact", contactRoutes);
 // app.use('/api/pesanan', pesananRoutes); // Nanti diaktifkan jika sudah dibuat
 
 // Route opsional untuk testing koneksi database
