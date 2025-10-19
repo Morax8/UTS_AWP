@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import CustomDropdown from "../components/customDropdown";
 import useScrollAnimation from "../hooks/useScrollAnimation";
+import { useCart } from "../context/CartContext";
 
 // --- Komponen Ikon SVG (agar tidak butuh library eksternal) ---
 const StarIcon = ({ className }) => (
@@ -60,6 +61,8 @@ export default function MenuPage() {
   useScrollAnimation();
   // --- PERUBAHAN 1: State untuk sorting ---
   const [sortBy, setSortBy] = useState("default");
+  const { addToCart } = useCart();
+
 
   useEffect(() => {
     const fetchMenuData = async () => {
@@ -177,11 +180,10 @@ export default function MenuPage() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
-                  selectedCategory === category
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${selectedCategory === category
                     ? "bg-yellow-400 text-black shadow-md scale-105"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -228,6 +230,13 @@ export default function MenuPage() {
                       className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition"
                     >
                       Pesan
+                    </button>
+                    {/* Tombol tambah ke keranjang */}
+                    <button
+                      onClick={() => addToCart(item)}
+                      className="ml-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold transition"
+                    >
+                      +
                     </button>
                   </div>
                 </div>
