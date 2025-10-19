@@ -1,224 +1,217 @@
 import React, { useState } from "react";
-import {
-  FaSearch,
-  FaBox,
-  FaTruck,
-  FaCheckCircle,
-  FaFacebookF,
-  FaTwitter,
-  FaYoutube,
-  FaInstagram,
-} from "react-icons/fa";
+import { FaSearch, FaBox, FaTruck, FaCheckCircle } from "react-icons/fa";
+
+// --- Komponen baru untuk Timeline Status ---
+const StatusTimeline = ({ currentStatus }) => {
+  const statuses = [
+    { name: "Pesanan Diterima", icon: <FaBox /> },
+    {
+      name: "Sedang Dimasak",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.184-1.268-.5-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.184-1.268.5-1.857m0 0a3.001 3.001 0 015 0m0 0a3.001 3.001 0 015 0m0 0A3.001 3.001 0 007.5 16.143M12 12a3 3 0 100-6 3 3 0 000 6z"
+          />
+        </svg>
+      ),
+    },
+    { name: "Dalam Pengantaran", icon: <FaTruck /> },
+    { name: "Selesai", icon: <FaCheckCircle /> },
+  ];
+
+  const currentIndex = statuses.findIndex((s) => s.name === currentStatus);
+
+  return (
+    <div className="flex justify-between items-center my-8">
+      {statuses.map((status, index) => (
+        <React.Fragment key={index}>
+          <div className="flex flex-col items-center text-center">
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                index <= currentIndex
+                  ? "bg-yellow-500 text-white"
+                  : "bg-gray-200 text-gray-500"
+              }`}
+            >
+              {index < currentIndex ? (
+                <FaCheckCircle className="w-6 h-6" />
+              ) : (
+                status.icon
+              )}
+            </div>
+            <p
+              className={`mt-2 text-xs font-semibold ${
+                index <= currentIndex ? "text-gray-800" : "text-gray-500"
+              }`}
+            >
+              {status.name}
+            </p>
+          </div>
+          {index < statuses.length - 1 && (
+            <div
+              className={`flex-grow h-1 mx-2 rounded ${
+                index < currentIndex ? "bg-yellow-500" : "bg-gray-200"
+              }`}
+            ></div>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
 
 export default function TrackPage() {
   const [search, setSearch] = useState("");
   const [orderData, setOrderData] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  //ini data dummy zi blom ada databsenya, bisa diganti ntr ama fetch ke backend
-  const mockOrders = [
-    {
-      id: "ORD001",
-      name: "Budi Santoso",
-      status: "Dikirim",
-      items: ["Nasi Kuning Komplit", "Rendang Sapi Premium"],
-      total: 80000,
-      estimated: "14:30 WIB",
-    },
-    {
-      id: "ORD002",
-      name: "Siti Aminah",
-      status: "Diproses",
-      items: ["Soto Ayam Spesial"],
-      total: 30000,
-      estimated: "15:00 WIB",
-    },
-    {
-      id: "ORD003",
-      name: "Andi Wijaya",
-      status: "Selesai",
-      items: ["Ayam Goreng Kriuk", "Sambal Terasi"],
-      total: 25000,
-      estimated: "13:00 WIB",
-    },
-  ];
-
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    const foundOrder = mockOrders.find(
-      (order) =>
-        order.id.toLowerCase() === search.toLowerCase() ||
-        order.name.toLowerCase().includes(search.toLowerCase())
-    );
-
-    if (foundOrder) {
-      setOrderData(foundOrder);
-      setError("");
-    } else {
+    if (!search) {
+      setError("Kolom pencarian tidak boleh kosong.");
+      return;
+    }
+    setLoading(true);
+    setOrderData(null);
+    setError("");
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(
+        `${apiUrl}/api/orders/track?search=${encodeURIComponent(search)}`
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal mencari pesanan.");
+      }
+      setOrderData(result.data);
+    } catch (err) {
       setOrderData(null);
-      setError("Pesanan tidak ditemukan. Coba periksa kembali kode atau nama Anda.");
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
       {/* Header Section */}
-      <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-16 text-center shadow-md">
-        <h1 className="text-5xl font-bold mb-3 animate-fade-in">Lacak Pesanan</h1>
+      <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
+        <h1 className="text-5xl font-bold mb-3">Lacak Pesanan Anda</h1>
         <p className="text-lg text-gray-700">
-          Masukkan <strong>kode pesanan</strong> atau <strong>nama Anda</strong> untuk melihat status.
+          Lihat status pesanan Anda secara real-time.
         </p>
       </section>
 
       {/* Search Box */}
-      <div className="max-w-xl mx-auto mt-10 bg-white shadow-lg rounded-xl p-6 animate-scale-up">
-        <form onSubmit={handleSearch} className="flex items-center gap-3">
-          <input
-            type="text"
-            placeholder="Masukkan kode pesanan..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-          />
+      <div className="max-w-2xl w-full mx-auto -mt-10 z-10 px-4">
+        <form
+          onSubmit={handleSearch}
+          className="flex items-center gap-3 bg-white shadow-xl rounded-xl p-4"
+        >
+          <div className="relative w-full">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Masukkan kode pesanan Anda di sini..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-yellow-400 focus:bg-white focus:border-yellow-400 outline-none transition"
+            />
+          </div>
           <button
             type="submit"
-            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-5 py-3 rounded-lg flex items-center gap-2 transition"
+            disabled={loading}
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0"
           >
-            <FaSearch /> Cari
+            {loading ? "Mencari..." : "Cari"}
           </button>
         </form>
       </div>
 
       {/* Hasil Pencarian */}
-      <div className="max-w-2xl mx-auto mt-10 px-4 text-center flex-grow">
-        {error && <p className="text-red-600 font-medium">{error}</p>}
+      <div className="max-w-3xl w-full mx-auto mt-10 px-4 text-center flex-grow">
+        {error && (
+          <p className="text-red-600 font-medium bg-red-100 p-3 rounded-lg">
+            {error}
+          </p>
+        )}
 
         {orderData && (
-          <div className="bg-white rounded-xl shadow-md p-8 mt-6 animate-fade-in">
-            <h2 className="text-2xl font-bold mb-4 text-yellow-600">
-              Detail Pesanan #{orderData.id}
-            </h2>
-
-            {/* Status Icon */}
-            <div className="flex justify-center items-center mb-6">
-              {orderData.status === "Selesai" ? (
-                <FaCheckCircle className="text-green-500 text-4xl" />
-              ) : orderData.status === "Dikirim" ? (
-                <FaTruck className="text-blue-500 text-4xl" />
-              ) : (
-                <FaBox className="text-yellow-500 text-4xl" />
-              )}
+          <div className="bg-white rounded-xl shadow-lg p-8 mt-6 animate-fade-in text-left">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-gray-200 pb-4 mb-4">
+              <div>
+                <p className="text-sm text-gray-500">Kode Pesanan</p>
+                <h2 className="text-2xl font-bold text-yellow-600">
+                  #{orderData.order_code}
+                </h2>
+              </div>
+              <div className="mt-2 sm:mt-0 sm:text-right">
+                <p className="text-sm text-gray-500">Nama Pemesan</p>
+                <p className="text-lg font-semibold">
+                  {orderData.customer_name}
+                </p>
+              </div>
             </div>
 
-            <p className="text-lg font-semibold mb-2">Nama Pemesan: {orderData.name}</p>
-            <p className="text-gray-700 mb-3">
-              Status Pesanan:{" "}
-              <span
-                className={`font-semibold ${
-                  orderData.status === "Selesai"
-                    ? "text-green-600"
-                    : orderData.status === "Dikirim"
-                    ? "text-blue-600"
-                    : "text-yellow-600"
-                }`}
-              >
-                {orderData.status}
-              </span>
-            </p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Status Pengiriman
+            </h3>
+            <StatusTimeline currentStatus={orderData.status} />
 
-            <div className="border-t border-gray-200 my-4"></div>
+            <div className="border-t border-gray-200 my-6"></div>
 
-            <h3 className="text-lg font-bold mb-2">Daftar Pesanan:</h3>
-            <ul className="text-gray-700 mb-4">
+            <h3 className="text-lg font-semibold mb-3">Rincian Pesanan:</h3>
+            <div className="space-y-2 text-gray-700">
               {orderData.items.map((item, i) => (
-                <li key={i}>🍱 {item}</li>
+                <div
+                  key={i}
+                  className="flex justify-between items-center p-2 rounded-md hover:bg-gray-50"
+                >
+                  <span>
+                    {item.quantity}x {item.menu_name}
+                  </span>
+                  <span className="font-medium">
+                    Rp
+                    {(item.quantity * item.unit_price).toLocaleString("id-ID")}
+                  </span>
+                </div>
               ))}
-            </ul>
+            </div>
 
-            <p className="text-lg font-bold text-yellow-600">
-              Total: Rp{orderData.total.toLocaleString("id-ID")}
-            </p>
+            <div className="border-t-2 border-dashed border-gray-200 my-4"></div>
 
-            <p className="text-sm text-gray-500 mt-3">
-              Estimasi Selesai: {orderData.estimated}
+            <div className="flex justify-between items-center text-xl font-bold">
+              <span>Total Pembayaran</span>
+              <span className="text-yellow-600">
+                Rp{orderData.total_amount.toLocaleString("id-ID")}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {!orderData && !error && !loading && (
+          <div className="text-center mt-20 text-gray-500">
+            <FaBox className="text-7xl text-gray-300 mx-auto mb-4" />
+            <p className="text-lg">
+              Masukkan kode pesanan Anda untuk memulai pelacakan.
             </p>
           </div>
         )}
       </div>
 
-      {/* Default View (belum cari) */}
-      {!orderData && !error && (
-        <div className="text-center mt-20 text-gray-500 animate-fade-in">
-          <FaBox className="text-6xl text-gray-300 mx-auto mb-4" />
-          <p>Masukkan kode atau nama untuk melacak pesanan Anda.</p>
-        </div>
-      )}
-
-      {/* FOOTER */}
-      <footer className="bg-white text-gray-800 border-t border-gray-300 mt-20 animate-fade-in">
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 space-y-8 md:space-y-0">
-            <div className="text-3xl font-extrabold text-red-600 tracking-wider animate-pulse">
-              KATERING
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-sm">
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                FAQ
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-            </div>
-          </div>
-
-          <div className="flex justify-start md:justify-center space-x-6 mb-8">
-            {[
-              { icon: <FaFacebookF />, href: "#" },
-              { icon: <FaTwitter />, href: "#" },
-              { icon: <FaYoutube />, href: "#" },
-              { icon: <FaInstagram />, href: "#" },
-            ].map((item, index) => (
-              <a
-                key={index}
-                href={item.href}
-                className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-400 hover:bg-red-600 hover:text-white transition-all duration-300 transform hover:scale-110"
-              >
-                {item.icon}
-              </a>
-            ))}
-          </div>
-
-          <hr className="border-gray-300 mb-4" />
-
-          <div className="text-center text-sm text-gray-600 space-x-4">
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Price Disclaimer
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Responsible Disclosure
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Cookie Policy
-            </a>
-          </div>
-        </div>
-      </footer>
+      {/* Footer tidak disertakan agar fokus pada halaman */}
     </div>
   );
 }

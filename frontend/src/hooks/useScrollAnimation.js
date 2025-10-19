@@ -1,28 +1,43 @@
 import { useEffect } from "react";
 
-export default function useScrollAnimation() {
+// Custom hook untuk menangani animasi saat elemen masuk ke layar
+// Menerima dependency array untuk dijalankan ulang saat data berubah
+const useScrollAnimation = (dependencies = []) => {
   useEffect(() => {
-    const elements = document.querySelectorAll(".animate-on-scroll");
+    // Fungsi ini akan mencari dan mengamati elemen
+    const observeElements = () => {
+      const observer = new IntersectionObserver(
+        (entries, obs) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              obs.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+        }
+      );
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("animate-fade-in");
-            entry.target.classList.add("animate-scale-up");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-      }
-    );
+      const elements = document.querySelectorAll(".animate-on-scroll");
+      elements.forEach((el) => observer.observe(el));
 
-    elements.forEach((el) => observer.observe(el));
-
-    return () => {
-      elements.forEach((el) => observer.unobserve(el));
+      // Return cleanup function
+      return () => {
+        elements.forEach((el) => observer.unobserve(el));
+      };
     };
-  }, []);
-}
+
+    // Panggil fungsi observe setelah delay singkat untuk memastikan DOM sudah ter-update
+    const timeoutId = setTimeout(observeElements, 50);
+
+    // Cleanup function utama
+    return () => {
+      clearTimeout(timeoutId);
+      // Logika cleanup dari observeElements akan berjalan saat dipanggil
+    };
+  }, [...dependencies]); // Jalankan ulang effect setiap kali dependency berubah
+};
+
+export default useScrollAnimation;
