@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import CustomDropdown from "../components/customDropdown";
+import CustomDropdown from "../components/CustomDropdown";
 import useScrollAnimation from "../hooks/useScrollAnimation";
+import { useCart } from "../context/cartContext"; // <-- 1. IMPORT useCart
 
 // --- Komponen Ikon SVG (agar tidak butuh library eksternal) ---
 const StarIcon = ({ className }) => (
@@ -50,15 +51,16 @@ const sortOptions = [
 ];
 
 export default function MenuPage() {
+  const { addToCart } = useCart(); // <-- 2. PANGGIL HOOK useCart
+  const [addedItemId, setAddedItemId] = useState(null); // State untuk feedback visual
+  useScrollAnimation();
+
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  useScrollAnimation();
-  // --- PERUBAHAN 1: State untuk sorting ---
   const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
@@ -87,7 +89,7 @@ export default function MenuPage() {
   }, []);
 
   const filteredMenuItems = useMemo(() => {
-    let items = menuItems.filter((item) => {
+    let items = [...menuItems].filter((item) => {
       const categoryMatch =
         selectedCategory === "All" || item.category_name === selectedCategory;
       const searchMatch = item.name
@@ -96,7 +98,6 @@ export default function MenuPage() {
       return categoryMatch && searchMatch;
     });
 
-    // --- PERUBAHAN 2: Logika untuk sorting ---
     switch (sortBy) {
       case "price-asc":
         items.sort((a, b) => a.price - b.price);
@@ -111,19 +112,18 @@ export default function MenuPage() {
         items.sort((a, b) => b.name.localeCompare(a.name));
         break;
       default:
-        // Biarkan urutan default (biasanya berdasarkan ID dari database)
         break;
     }
     return items;
   }, [menuItems, selectedCategory, searchTerm, sortBy]);
 
-  const handlePesanClick = (itemName) => {
-    const message = `Halo, saya tertarik untuk memesan ${itemName}.`;
-    const phoneNumber = "6281234567890";
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
-    window.open(whatsappUrl, "_blank");
+  // --- 3. GANTI LOGIKA handlePesanClick MENJADI handleAddToCart ---
+  const handleAddToCart = (item) => {
+    addToCart(item);
+    setAddedItemId(item.id);
+    setTimeout(() => {
+      setAddedItemId(null);
+    }, 1500);
   };
 
   if (loading) {
@@ -151,8 +151,7 @@ export default function MenuPage() {
       </section>
 
       <div className="max-w-7xl mx-auto py-16 px-6 md:px-10">
-        {/* --- PERUBAHAN 3: UI Filter Bar yang lebih baik --- */}
-        <div className="bg-white p-6 rounded-xl shadow-md mb-12">
+        <div className="bg-white p-6 rounded-xl shadow-md mb-12 animate-on-scroll">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="relative md:col-span-2">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -191,50 +190,59 @@ export default function MenuPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredMenuItems.length > 0 ? (
-            filteredMenuItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 flex flex-col"
-              >
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                  />
-                  <span className="absolute top-3 left-3 bg-yellow-400 text-xs font-semibold px-3 py-1 rounded-full text-gray-800 shadow">
-                    {item.category_name}
-                  </span>
-                </div>
-                <div className="p-5 flex flex-col flex-grow">
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">
-                    {item.name}
-                  </h3>
-                  <p className="text-gray-500 text-sm mb-5 h-15">
-                    {item.description}
-                  </p>
-                  <div className="flex items-center text-sm text-gray-600 mb-3">
-                    <StarIcon className="w-5 h-5 text-yellow-400 mr-1" />
-                    <span>5.0</span>
-                    <span className="mx-1">•</span>
-                    <span>(100+)</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-lg font-bold text-yellow-500">
-                      Rp{item.price.toLocaleString("id-ID")}
+            filteredMenuItems.map((item, index) => {
+              const isAdded = item.id === addedItemId;
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 flex flex-col animate-on-scroll"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="relative h-56 overflow-hidden">
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                    />
+                    <span className="absolute top-3 left-3 bg-yellow-400 text-xs font-semibold px-3 py-1 rounded-full text-gray-800 shadow">
+                      {item.category_name}
                     </span>
-                    <button
-                      onClick={() => handlePesanClick(item.name)}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition"
-                    >
-                      Pesan
-                    </button>
+                  </div>
+                  <div className="p-5 flex flex-col flex-grow">
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">
+                      {item.name}
+                    </h3>
+                    <p className="text-gray-500 text-sm mb-5 h-15">
+                      {item.description}
+                    </p>
+                    <div className="flex items-center text-sm text-gray-600 mb-3">
+                      <StarIcon className="w-5 h-5 text-yellow-400 mr-1" />
+                      <span>5.0</span>
+                      <span className="mx-1">•</span>
+                      <span>(100+)</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-lg font-bold text-yellow-500">
+                        Rp{item.price.toLocaleString("id-ID")}
+                      </span>
+                      {/* --- 4. PERBARUI TOMBOL INI --- */}
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        disabled={isAdded}
+                        className={`px-4 py-2 rounded-lg font-semibold transition w-32 ${
+                          isAdded
+                            ? "bg-green-500 text-white cursor-not-allowed"
+                            : "bg-yellow-400 hover:bg-yellow-500 text-black"
+                        }`}
+                      >
+                        {isAdded ? "Ditambahkan ✓" : "Tambah"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
-            // --- PERUBAHAN 4: Tampilan "No Results" yang lebih baik ---
             <div className="col-span-full flex flex-col items-center justify-center py-16">
               <EmptyIcon />
               <h3 className="mt-4 text-xl font-semibold text-gray-700">

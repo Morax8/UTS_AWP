@@ -15,6 +15,7 @@ import Track from "./pages/track";
 import MasterPesanan from "./pages/admin/masterPesanan";
 import Cart from "./pages/cart";
 import Checkout from "./pages/checkout";
+import ProfilePage from "./pages/profile";
 
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
@@ -42,6 +43,7 @@ function App() {
         <Route path="/admin/master-pesanan" element={<MasterPesanan />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/profile" element={<ProfilePage />} />
 
         <Route path="/not-found" element={<NotFoundPage />} />
         <Route path="*" element={<NotFoundPage />} />
