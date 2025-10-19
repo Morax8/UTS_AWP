@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import CustomDropdown from "../components/CustomDropdown";
 import useScrollAnimation from "../hooks/useScrollAnimation";
-import { useCart } from "../context/cartContext"; // <-- 1. IMPORT useCart
+import { useCart } from "../context/cartContext";
 
 // --- Komponen Ikon SVG (agar tidak butuh library eksternal) ---
 const StarIcon = ({ className }) => (
@@ -62,6 +62,8 @@ export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const { addToCart } = useCart();
+
 
   useEffect(() => {
     const fetchMenuData = async () => {
@@ -176,11 +178,10 @@ export default function MenuPage() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
-                  selectedCategory === category
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${selectedCategory === category
                     ? "bg-yellow-400 text-black shadow-md scale-105"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -207,6 +208,7 @@ export default function MenuPage() {
                     <span className="absolute top-3 left-3 bg-yellow-400 text-xs font-semibold px-3 py-1 rounded-full text-gray-800 shadow">
                       {item.category_name}
                     </span>
+
                   </div>
                   <div className="p-5 flex flex-col flex-grow">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">
@@ -222,22 +224,19 @@ export default function MenuPage() {
                       <span>(100+)</span>
                     </div>
                     <div className="flex items-center justify-between mt-auto">
-                      <span className="text-lg font-bold text-yellow-500">
-                        Rp{item.price.toLocaleString("id-ID")}
-                      </span>
-                      {/* --- 4. PERBARUI TOMBOL INI --- */}
-                      <button
-                        onClick={() => handleAddToCart(item)}
-                        disabled={isAdded}
-                        className={`px-4 py-2 rounded-lg font-semibold transition w-32 ${
-                          isAdded
-                            ? "bg-green-500 text-white cursor-not-allowed"
-                            : "bg-yellow-400 hover:bg-yellow-500 text-black"
-                        }`}
-                      >
-                        {isAdded ? "Ditambahkan ✓" : "Tambah"}
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handlePesanClick(item.name)}
+                      className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition"
+                    >
+                      Pesan
+                    </button>
+                    {/* Tombol tambah ke keranjang */}
+                    <button
+                      onClick={() => addToCart(item)}
+                      className="ml-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold transition"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
               );

@@ -21,13 +21,15 @@ import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import ScrollToTop from "./components/scrollToTop";
 
+import { CartProvider } from "./context/CartContext";
+
 function App() {
   return (
-    <div>
-      {/* Navbar atau header bisa ditaruh di sini */}
-      <ScrollToTop />
-      <Navbar />
-
+    <CartProvider>
+      <div>
+        {/* Navbar atau header bisa ditaruh di sini */}
+        <ScrollToTop />
+        <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
@@ -44,13 +46,13 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/not-found" element={<NotFoundPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
 
-        <Route path="/not-found" element={<NotFoundPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </CartProvider>
   );
 }
 
