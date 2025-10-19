@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import Footer from "../components/Footer";
 import useScrollAnimation from "../hooks/useScrollAnimation"; // Asumsi hook ini sudah ada
 
 // --- Komponen Ikon SVG (agar rapi) ---
