@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { FaShoppingCart } from "react-icons/fa";
 
 // Helper function untuk styling NavLink di desktop
 const getNavLinkClass = ({ isActive }) => {
@@ -43,7 +44,18 @@ function Navbar() {
 
           {/* Tengah: Menu Navigasi Desktop */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+            <div className="ml-10 flex items-center space-x-6">
+              {/* 🔹 Kanan: Cart + Login / User Info */}
+              {/* 🛒 Cart Icon */}
+              <Link to="/cart" className="relative group">
+                <FaShoppingCart className="text-2xl text-gray-600 group-hover:text-yellow-600 transition-colors duration-300" />
+
+                {/* 🔸 (Opsional) Jumlah item di keranjang */}
+                <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
+                  2
+                </span>
+              </Link>
+
               {isLoggedIn ? (
                 <>
                   <NavLink to="/admin/dashboard" className={getNavLinkClass}>
