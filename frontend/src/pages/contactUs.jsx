@@ -9,193 +9,199 @@ import {
   FaYoutube,
 } from "react-icons/fa";
 
+// --- Komponen baru untuk Input Field dengan Ikon ---
+const InputField = ({ icon, ...props }) => (
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+      {icon}
+    </div>
+    <input
+      {...props}
+      className="w-full pl-12 pr-4 py-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-yellow-400 focus:bg-white focus:border-yellow-400 outline-none transition"
+    />
+  </div>
+);
+
+const TextAreaField = (props) => (
+  <textarea
+    {...props}
+    className="w-full px-4 py-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-yellow-400 focus:bg-white focus:border-yellow-400 outline-none transition resize-none"
+  ></textarea>
+);
+
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSent(true);
-    setTimeout(() => setSent(false), 4000);
-    setForm({ name: "", email: "", message: "" });
+    setLoading(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${apiUrl}/api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Gagal mengirim pesan.");
+      }
+
+      setSuccess(true);
+      setForm({ name: "", email: "", message: "" });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-16 text-center shadow-md animate-fade-in">
+    <div className="min-h-screen bg-gray-50 text-gray-800">
+      <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
         <h1 className="text-5xl font-bold mb-3">Hubungi Kami</h1>
-        <p className="text-lg text-gray-700">
-          Ada pertanyaan, saran, atau ingin memesan langsung? Kami siap membantu!
+        <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          Ada pertanyaan, saran, atau ingin memesan langsung? Kami siap
+          membantu!
         </p>
       </section>
 
-      {/* Contact Form */}
-      <div className="max-w-6xl mx-auto my-16 px-6 flex flex-col md:flex-row gap-12">
-        {/* Info Kontak */}
-        <div className="md:w-1/2 space-y-6 animate-scale-up">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Kontak Kami</h2>
+      <div className="max-w-6xl w-full mx-auto my-16 px-6">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+          {/* Bagian Kiri: Info Kontak (dengan background) */}
+          <div className="md:w-2/5 bg-yellow-500 text-white p-8 md:p-12 space-y-8">
+            <h2 className="text-3xl font-bold mb-6">Info Kontak</h2>
+            <div className="flex items-start space-x-4">
+              <FaMapMarkerAlt className="text-2xl mt-1 flex-shrink-0" />
+              <p className="text-lg">Jl. Mawar No. 15, Tangerang, Indonesia</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <FaPhone className="text-2xl" />
+              <p className="text-lg">+62 812 3456 7890</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <FaEnvelope className="text-2xl" />
+              <p className="text-lg">info@kateringku.com</p>
+            </div>
 
-          <div className="flex items-center space-x-4">
-            <FaPhone className="text-yellow-500 text-2xl" />
-            <p className="text-lg">+62 812 3456 7890</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <FaEnvelope className="text-yellow-500 text-2xl" />
-            <p className="text-lg">info@kateringrassya.com</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <FaMapMarkerAlt className="text-yellow-500 text-2xl" />
-            <p className="text-lg">Jl. Mawar No. 15, Tangerang, Indonesia</p>
+            <div className="border-t border-yellow-400 my-6"></div>
+
+            <h3 className="text-xl font-semibold">Ikuti Kami:</h3>
+            <div className="flex space-x-4">
+              {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map(
+                (Icon, index) => (
+                  <a
+                    key={index}
+                    href="#"
+                    className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-white text-white hover:bg-white hover:text-yellow-500 transition-all transform hover:scale-110"
+                  >
+                    <Icon />
+                  </a>
+                )
+              )}
+            </div>
           </div>
 
-          <h3 className="text-xl font-semibold mt-8 mb-3">Ikuti Kami:</h3>
-          <div className="flex space-x-4">
-            {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map(
-              (Icon, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-400 text-gray-700 hover:bg-yellow-500 hover:text-white transition-all transform hover:scale-110"
-                >
-                  <Icon />
-                </a>
-              )
+          {/* Bagian Kanan: Form */}
+          <form onSubmit={handleSubmit} className="md:w-3/5 p-8 md:p-12">
+            <h2 className="text-3xl font-bold mb-8 text-gray-800">
+              Kirim Pesan
+            </h2>
+
+            <div className="space-y-6">
+              <InputField
+                icon={
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                }
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                placeholder="Nama Lengkap Anda"
+              />
+              <InputField
+                icon={
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                }
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+                placeholder="Alamat Email Anda"
+              />
+              <TextAreaField
+                name="message"
+                value={form.message}
+                onChange={handleChange}
+                required
+                rows="5"
+                placeholder="Tulis pesan Anda di sini..."
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-8 bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-lg shadow-md transition transform hover:scale-[1.02] disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {loading ? "Mengirim..." : "Kirim Pesan"}
+            </button>
+
+            {success && (
+              <p className="text-green-600 font-medium text-center mt-4">
+                ✅ Pesan Anda telah dikirim! Kami akan segera menghubungi Anda.
+              </p>
             )}
-          </div>
+            {error && (
+              <p className="text-red-600 font-medium text-center mt-4">
+                ❌ Terjadi kesalahan: {error}
+              </p>
+            )}
+          </form>
         </div>
-
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="md:w-1/2 bg-white shadow-lg rounded-xl p-8 animate-fade-in"
-        >
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Kirim Pesan</h2>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Nama
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition"
-              placeholder="Masukkan nama Anda"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition"
-              placeholder="Masukkan email Anda"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Pesan
-            </label>
-            <textarea
-              name="message"
-              value={form.message}
-              onChange={handleChange}
-              required
-              rows="5"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none transition resize-none"
-              placeholder="Tulis pesan Anda di sini..."
-            ></textarea>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded-lg shadow-md transition transform hover:scale-[1.02]"
-          >
-            Kirim Pesan
-          </button>
-
-          {sent && (
-            <p className="text-green-600 font-medium text-center mt-4 animate-fade-in">
-              ✅ Pesan Anda telah dikirim! Kami akan segera menghubungi Anda.
-            </p>
-          )}
-        </form>
       </div>
-
-      {/* FOOTER */}
-      <footer className="bg-white text-gray-800 border-t border-gray-300 mt-20 animate-fade-in">
-        <div className="max-w-7xl mx-auto px-6 py-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 space-y-8 md:space-y-0">
-            <div className="text-3xl font-extrabold text-red-600 tracking-wider animate-pulse">
-              KATERING
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-sm">
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                FAQ
-              </a>
-              <a href="#" className="hover:text-red-600 transition-colors">
-                Lorem Ipsum
-              </a>
-            </div>
-          </div>
-
-          <div className="flex justify-start md:justify-center space-x-6 mb-8">
-            {[FaFacebookF, FaTwitter, FaYoutube, FaInstagram].map(
-              (Icon, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-400 hover:bg-red-600 hover:text-white transition-all duration-300 transform hover:scale-110"
-                >
-                  <Icon />
-                </a>
-              )
-            )}
-          </div>
-
-          <hr className="border-gray-300 mb-4" />
-          <div className="text-center text-sm text-gray-600 space-x-4">
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Price Disclaimer
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Responsible Disclosure
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Cookie Policy
-            </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

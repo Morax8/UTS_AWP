@@ -1,40 +1,65 @@
 import React, { useState, useEffect, useMemo } from "react";
+import CustomDropdown from "../components/customDropdown";
+import useScrollAnimation from "../hooks/useScrollAnimation";
 
-// --- Komponen Ikon Bintang (SVG) ---
+// --- Komponen Ikon SVG (agar tidak butuh library eksternal) ---
 const StarIcon = ({ className }) => (
-  <svg
-    className={className}
-    fill="currentColor"
-    viewBox="0 0 20 20"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.96c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.96a1 1 0 00-.364-1.118L2.05 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.96z" />
   </svg>
 );
-
-// --- Komponen Footer ---
-const Footer = () => (
-  <footer className="bg-white text-gray-800 border-t border-gray-300 mt-20">
-    <div className="max-w-7xl mx-auto px-6 py-10 text-center">
-      <div className="text-3xl font-extrabold text-yellow-500 tracking-wider mb-8">
-        KATERINGKU
-      </div>
-      <p className="text-sm text-gray-600">
-        © {new Date().getFullYear()} KateringKu. All Rights Reserved.
-      </p>
-    </div>
-  </footer>
+const SearchIcon = () => (
+  <svg
+    className="h-5 w-5 text-gray-400"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+    />
+  </svg>
 );
+const EmptyIcon = () => (
+  <svg
+    className="w-16 h-16 text-gray-300"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 10l4 4m0-4l-4 4"
+    />
+  </svg>
+);
+
+const sortOptions = [
+  { value: "default", label: "Urutkan Berdasarkan" },
+  { value: "price-asc", label: "Harga: Termurah" },
+  { value: "price-desc", label: "Harga: Termahal" },
+  { value: "name-asc", label: "Nama: A-Z" },
+  { value: "name-desc", label: "Nama: Z-A" },
+];
 
 export default function MenuPage() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- PERUBAHAN 1: State untuk filter ---
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  useScrollAnimation();
+  // --- PERUBAHAN 1: State untuk sorting ---
+  const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
     const fetchMenuData = async () => {
@@ -47,8 +72,6 @@ export default function MenuPage() {
         }
         const result = await response.json();
         setMenuItems(result.data);
-
-        // --- PERUBAHAN 2: Ekstrak kategori unik dari data menu ---
         const uniqueCategories = [
           "All",
           ...new Set(result.data.map((item) => item.category_name)),
@@ -63,20 +86,36 @@ export default function MenuPage() {
     fetchMenuData();
   }, []);
 
-  // --- PERUBAHAN 3: Logika untuk memfilter menu ---
-  // `useMemo` digunakan agar proses filter tidak berjalan ulang jika data tidak berubah.
   const filteredMenuItems = useMemo(() => {
-    return menuItems.filter((item) => {
-      // Filter berdasarkan kategori
+    let items = menuItems.filter((item) => {
       const categoryMatch =
         selectedCategory === "All" || item.category_name === selectedCategory;
-      // Filter berdasarkan nama (pencarian)
       const searchMatch = item.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
       return categoryMatch && searchMatch;
     });
-  }, [menuItems, selectedCategory, searchTerm]);
+
+    // --- PERUBAHAN 2: Logika untuk sorting ---
+    switch (sortBy) {
+      case "price-asc":
+        items.sort((a, b) => a.price - b.price);
+        break;
+      case "price-desc":
+        items.sort((a, b) => b.price - a.price);
+        break;
+      case "name-asc":
+        items.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        items.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      default:
+        // Biarkan urutan default (biasanya berdasarkan ID dari database)
+        break;
+    }
+    return items;
+  }, [menuItems, selectedCategory, searchTerm, sortBy]);
 
   const handlePesanClick = (itemName) => {
     const message = `Halo, saya tertarik untuk memesan ${itemName}.`;
@@ -104,34 +143,44 @@ export default function MenuPage() {
 
   return (
     <div className="bg-gray-50 text-gray-800">
-      <div className="text-center py-16 bg-gradient-to-r from-yellow-300 to-yellow-500 text-black shadow-md">
+      <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
         <h1 className="text-5xl font-bold mb-3">Menu KateringKu</h1>
         <p className="text-lg text-gray-700">
           Pilih menu favorit Anda — dimasak dengan bahan segar dan rasa rumahan.
         </p>
-      </div>
+      </section>
 
       <div className="max-w-7xl mx-auto py-16 px-6 md:px-10">
-        {/* --- PERUBAHAN 4: UI untuk kontrol filter --- */}
-        <div className="mb-12">
-          <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-6">
-            <input
-              type="text"
-              placeholder="Cari nama menu..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        {/* --- PERUBAHAN 3: UI Filter Bar yang lebih baik --- */}
+        <div className="bg-white p-6 rounded-xl shadow-md mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            <div className="relative md:col-span-2">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon />
+              </div>
+              <input
+                type="text"
+                placeholder="Cari nama menu..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-yellow-400 focus:bg-white focus:border-yellow-400 outline-none"
+              />
+            </div>
+            <CustomDropdown
+              options={sortOptions}
+              selected={sortBy}
+              onSelect={setSortBy}
             />
           </div>
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2 mt-4 pt-4 border-t border-gray-200">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition ${
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
                   selectedCategory === category
-                    ? "bg-yellow-400 text-black shadow"
-                    : "bg-white text-gray-600 hover:bg-gray-200"
+                    ? "bg-yellow-400 text-black shadow-md scale-105"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {category}
@@ -140,7 +189,6 @@ export default function MenuPage() {
           </div>
         </div>
 
-        {/* --- PERUBAHAN 5: Render `filteredMenuItems` bukan `menuItems` --- */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredMenuItems.length > 0 ? (
             filteredMenuItems.map((item) => (
@@ -150,7 +198,7 @@ export default function MenuPage() {
               >
                 <div className="relative h-56 overflow-hidden">
                   <img
-                    src={`${item.image_url}`}
+                    src={item.image_url}
                     alt={item.name}
                     className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                   />
@@ -186,13 +234,19 @@ export default function MenuPage() {
               </div>
             ))
           ) : (
-            <p className="col-span-full text-center text-gray-500">
-              Menu yang kamu cari tidak ditemukan.
-            </p>
+            // --- PERUBAHAN 4: Tampilan "No Results" yang lebih baik ---
+            <div className="col-span-full flex flex-col items-center justify-center py-16">
+              <EmptyIcon />
+              <h3 className="mt-4 text-xl font-semibold text-gray-700">
+                Menu Tidak Ditemukan
+              </h3>
+              <p className="mt-1 text-gray-500">
+                Coba kata kunci atau filter kategori yang lain.
+              </p>
+            </div>
           )}
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

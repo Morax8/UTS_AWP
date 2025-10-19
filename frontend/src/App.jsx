@@ -15,11 +15,14 @@ import Track from "./pages/track";
 import MasterPesanan from "./pages/admin/masterPesanan";
 
 import Navbar from "./components/navbar";
+import Footer from "./components/footer";
+import ScrollToTop from "./components/scrollToTop";
 
 function App() {
   return (
     <div>
       {/* Navbar atau header bisa ditaruh di sini */}
+      <ScrollToTop />
       <Navbar />
 
       <Routes>
@@ -39,6 +42,8 @@ function App() {
         <Route path="/not-found" element={<NotFoundPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+
+      <Footer />
     </div>
   );
 }
