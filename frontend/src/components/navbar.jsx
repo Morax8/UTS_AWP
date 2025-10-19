@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
-import { useCart } from "../context/cartContext"; // <-- 1. IMPORT KEMBALI useCart
-import { FaShoppingCart } from "react-icons/fa";
-
+import { useCart } from "../context/cartContext";
+import { FaShoppingCart } from "react-icons/fa"; // Pastikan react-icons sudah terinstall
 
 // --- Komponen Ikon SVG ---
 const UserCircleIcon = () => (
@@ -38,28 +37,12 @@ const LogoutIcon = () => (
     />
   </svg>
 );
-const CartIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-    />
-  </svg>
-);
 
 // Helper function untuk styling NavLink
 const getNavLinkClass = ({ isActive }) =>
   isActive
     ? "text-yellow-600 font-medium px-3 py-2"
-    : "text-gray-500 hover:text-yellow-600 font-medium px-3 py-2";
+    : "text-gray-500 hover:text-yellow-600 font-medium px-3 py-2 transition-colors";
 const getMobileNavLinkClass = ({ isActive }) =>
   isActive
     ? "bg-yellow-100 text-yellow-700 block px-3 py-2 rounded-md text-base font-medium"
@@ -67,7 +50,7 @@ const getMobileNavLinkClass = ({ isActive }) =>
 
 function Navbar() {
   const { currentUser, logout } = useAuth();
-  const { totalItems } = useCart(); // <-- 2. PANGGIL KEMBALI useCart
+  const { totalItems } = useCart(); // Cukup gunakan ini, tidak perlu hitung ulang
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -91,9 +74,6 @@ function Navbar() {
     navigate("/");
   };
 
-  const { cartItems } = useCart();
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
   return (
     <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,23 +90,6 @@ function Navbar() {
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               {currentUser?.role === "admin" ? (
-
-            <div className="ml-10 flex items-center space-x-6">
-              {/* 🔹 Kanan: Cart + Login / User Info */}
-              {/* 🛒 Cart Icon */}
-              <Link to="/cart" className="relative group">
-                <FaShoppingCart className="text-2xl text-gray-600 group-hover:text-yellow-600 transition-colors duration-300" />
-
-                {/* 🔸 (Opsional) Jumlah item di keranjang */}
-                {totalItems > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5">
-                    {totalItems}
-                  </span>
-                )}
-
-              </Link>
-
-              {isLoggedIn ? (
                 <>
                   <NavLink to="/admin/dashboard" className={getNavLinkClass}>
                     Dashboard
@@ -137,13 +100,19 @@ function Navbar() {
                   >
                     Master Pesanan
                   </NavLink>
+                  <NavLink to="/admin/master-menu" className={getNavLinkClass}>
+                    Master Menu
+                  </NavLink>
+                  <NavLink to="/admin/laporan" className={getNavLinkClass}>
+                    Laporan
+                  </NavLink>
                 </>
               ) : (
                 <>
                   <NavLink to="/menu" className={getNavLinkClass}>
                     Menu
                   </NavLink>
-                  <NavLink to="/track-order" className={getNavLinkClass}>
+                  <NavLink to="/track" className={getNavLinkClass}>
                     Lacak Pesanan
                   </NavLink>
                   <NavLink to="/about" className={getNavLinkClass}>
@@ -160,15 +129,14 @@ function Navbar() {
             </div>
           </div>
 
-          {/* Kanan: Login / User Info Desktop */}
+          {/* Kanan: Cart, Login / User Info Desktop */}
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6 space-x-5">
-              {/* --- 3. TAMBAHKAN KEMBALI IKON KERANJANG DI SINI --- */}
               {(!currentUser || currentUser.role === "customer") && (
                 <Link to="/cart" className="relative group">
-                  <CartIcon className="text-gray-600 group-hover:text-yellow-600 transition-colors" />
+                  <FaShoppingCart className="text-2xl text-gray-600 group-hover:text-yellow-600 transition-colors duration-300" />
                   {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-3 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-bounce">
+                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-bounce">
                       {totalItems}
                     </span>
                   )}
@@ -271,7 +239,7 @@ function Navbar() {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white shadow-lg rounded-b-lg">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {/* ... Logika menu mobile bisa kamu sesuaikan seperti menu desktop ... */}
+            {/* ... Implementasi menu mobile di sini ... */}
           </div>
         </div>
       )}

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { FaSearch, FaBox, FaTruck, FaCheckCircle } from "react-icons/fa";
 
-// --- Komponen baru untuk Timeline Status ---
+// --- Komponen Timeline Status (tidak diubah) ---
 const StatusTimeline = ({ currentStatus }) => {
   const statuses = [
-    { name: "Pesanan Diterima", icon: <FaBox /> },
+    { name: "Pesanan Diterima", icon: <FaBox className="w-6 h-6" /> },
     {
       name: "Sedang Dimasak",
       icon: (
@@ -19,22 +20,20 @@ const StatusTimeline = ({ currentStatus }) => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.184-1.268-.5-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.184-1.268.5-1.857m0 0a3.001 3.001 0 015 0m0 0a3.001 3.001 0 015 0m0 0A3.001 3.001 0 007.5 16.143M12 12a3 3 0 100-6 3 3 0 000 6z"
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.184-1.268-.5-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.184-1.268-.5-1.857m0 0a3.001 3.001 0 015 0m0 0a3.001 3.001 0 015 0m0 0A3.001 3.001 0 007.5 16.143M12 12a3 3 0 100-6 3 3 0 000 6z"
           />
         </svg>
       ),
     },
-    { name: "Dalam Pengantaran", icon: <FaTruck /> },
-    { name: "Selesai", icon: <FaCheckCircle /> },
+    { name: "Dalam Pengantaran", icon: <FaTruck className="w-6 h-6" /> },
+    { name: "Selesai", icon: <FaCheckCircle className="w-6 h-6" /> },
   ];
-
   const currentIndex = statuses.findIndex((s) => s.name === currentStatus);
-
   return (
-    <div className="flex justify-between items-center my-8">
+    <div className="flex justify-between items-start my-8">
       {statuses.map((status, index) => (
         <React.Fragment key={index}>
-          <div className="flex flex-col items-center text-center">
+          <div className="flex flex-col items-center text-center w-24">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
                 index <= currentIndex
@@ -58,7 +57,7 @@ const StatusTimeline = ({ currentStatus }) => {
           </div>
           {index < statuses.length - 1 && (
             <div
-              className={`flex-grow h-1 mx-2 rounded ${
+              className={`flex-grow h-1 mx-2 rounded mt-6 ${
                 index < currentIndex ? "bg-yellow-500" : "bg-gray-200"
               }`}
             ></div>
@@ -70,14 +69,19 @@ const StatusTimeline = ({ currentStatus }) => {
 };
 
 export default function TrackPage() {
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const [search, setSearch] = useState(searchParams.get("code") || "");
   const [orderData, setOrderData] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!search) {
+  const successMessage = location.state?.successMessage;
+
+  // --- PERBAIKAN 1: Buat fungsi pencarian yang bisa dipanggil ulang ---
+  // Gunakan useCallback agar fungsi tidak dibuat ulang setiap render
+  const performSearch = useCallback(async (searchTerm) => {
+    if (!searchTerm) {
       setError("Kolom pencarian tidak boleh kosong.");
       return;
     }
@@ -85,9 +89,8 @@ export default function TrackPage() {
     setOrderData(null);
     setError("");
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(
-        `${apiUrl}/api/orders/track?search=${encodeURIComponent(search)}`
+        `/api/orders/track?search=${encodeURIComponent(searchTerm)}`
       );
       const result = await response.json();
       if (!response.ok) {
@@ -100,11 +103,29 @@ export default function TrackPage() {
     } finally {
       setLoading(false);
     }
+  }, []); // Dependensi kosong karena fungsi ini mandiri
+
+  // --- PERBAIKAN 2: useEffect untuk pencarian otomatis ---
+  useEffect(() => {
+    const initialCode = searchParams.get("code");
+    if (initialCode) {
+      // Panggil fungsi pencarian dengan kode dari URL
+      performSearch(initialCode);
+    }
+  }, [performSearch, searchParams]); // Jalankan ulang jika parameter URL berubah
+
+  // --- PERBAIKAN 3: Handler untuk form submit ---
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Update URL dengan kode yang dicari
+    setSearchParams({ code: search });
+    // Panggil fungsi pencarian dengan nilai dari input
+    performSearch(search);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
-      {/* Header Section */}
+      {/* ... (Hero section sama) ... */}
       <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
         <h1 className="text-5xl font-bold mb-3">Lacak Pesanan Anda</h1>
         <p className="text-lg text-gray-700">
@@ -112,10 +133,10 @@ export default function TrackPage() {
         </p>
       </section>
 
-      {/* Search Box */}
+      {/* ... (Search box sama, tapi sekarang memanggil handleSubmit) ... */}
       <div className="max-w-2xl w-full mx-auto -mt-10 z-10 px-4">
         <form
-          onSubmit={handleSearch}
+          onSubmit={handleSubmit}
           className="flex items-center gap-3 bg-white shadow-xl rounded-xl p-4"
         >
           <div className="relative w-full">
@@ -140,15 +161,19 @@ export default function TrackPage() {
         </form>
       </div>
 
-      {/* Hasil Pencarian */}
       <div className="max-w-3xl w-full mx-auto mt-10 px-4 text-center flex-grow">
+        {successMessage && !orderData && !error && (
+          <p className="text-green-600 font-medium bg-green-100 p-3 rounded-lg mb-4">
+            {successMessage}
+          </p>
+        )}
         {error && (
           <p className="text-red-600 font-medium bg-red-100 p-3 rounded-lg">
             {error}
           </p>
         )}
-
         {orderData && (
+          // ... (Tampilan hasil pencarian tidak diubah) ...
           <div className="bg-white rounded-xl shadow-lg p-8 mt-6 animate-fade-in text-left">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-gray-200 pb-4 mb-4">
               <div>
@@ -164,14 +189,11 @@ export default function TrackPage() {
                 </p>
               </div>
             </div>
-
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
               Status Pengiriman
             </h3>
             <StatusTimeline currentStatus={orderData.status} />
-
             <div className="border-t border-gray-200 my-6"></div>
-
             <h3 className="text-lg font-semibold mb-3">Rincian Pesanan:</h3>
             <div className="space-y-2 text-gray-700">
               {orderData.items.map((item, i) => (
@@ -189,9 +211,7 @@ export default function TrackPage() {
                 </div>
               ))}
             </div>
-
             <div className="border-t-2 border-dashed border-gray-200 my-4"></div>
-
             <div className="flex justify-between items-center text-xl font-bold">
               <span>Total Pembayaran</span>
               <span className="text-yellow-600">
@@ -200,7 +220,6 @@ export default function TrackPage() {
             </div>
           </div>
         )}
-
         {!orderData && !error && !loading && (
           <div className="text-center mt-20 text-gray-500">
             <FaBox className="text-7xl text-gray-300 mx-auto mb-4" />
@@ -210,8 +229,6 @@ export default function TrackPage() {
           </div>
         )}
       </div>
-
-      {/* Footer tidak disertakan agar fokus pada halaman */}
     </div>
   );
 }

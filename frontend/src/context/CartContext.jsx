@@ -1,72 +1,82 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 
 const CartContext = createContext();
 
+export const useCart = () => {
+  return useContext(CartContext);
+};
+
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState(() => {
-    const savedCart = localStorage.getItem("cart");
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const localData = localStorage.getItem("cart");
+      return localData ? JSON.parse(localData) : [];
+    } catch (error) {
+      console.error("Gagal memuat data keranjang:", error);
+      return [];
+    }
   });
 
-  // Simpan perubahan cart ke localStorage
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Tambah item ke cart
   const addToCart = (item) => {
-    setCartItems((prev) => {
-      const existingItem = prev.find((i) => i.id === item.id);
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((i) => i.id === item.id);
       if (existingItem) {
-        return prev.map((i) =>
+        return prevItems.map((i) =>
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       } else {
-        return [...prev, { ...item, quantity: 1 }];
+        return [...prevItems, { ...item, quantity: 1 }];
       }
     });
-    alert(`${item.name} berhasil ditambahkan ke keranjang!`);
   };
 
-  // Kurangi jumlah item
-  const decreaseFromCart = (id) => {
-    setCartItems((prev) =>
-      prev
-        .map((i) =>
-          i.id === id ? { ...i, quantity: i.quantity - 1 } : i
-        )
-        .filter((i) => i.quantity > 0)
-    );
+  const removeFromCart = (itemId) => {
+    setCartItems((prevItems) => prevItems.filter((i) => i.id !== itemId));
   };
 
-  // Hapus item dari cart
-  const removeFromCart = (id) => {
-    setCartItems((prev) => prev.filter((i) => i.id !== id));
+  // --- FUNGSI BARU UNTUK MENGURANGI KUANTITAS ---
+  const decreaseFromCart = (itemId) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((i) => i.id === itemId);
+      if (existingItem && existingItem.quantity > 1) {
+        // Jika kuantitas > 1, kurangi 1
+        return prevItems.map((i) =>
+          i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i
+        );
+      } else {
+        // Jika kuantitas 1, hapus item dari keranjang
+        return prevItems.filter((i) => i.id !== itemId);
+      }
+    });
   };
 
-  // Kosongkan seluruh cart
-  const clearCart = () => setCartItems([]);
+  // --- FUNGSI BARU UNTUK MENGOSONGKAN KERANJANG ---
+  const clearCart = () => {
+    setCartItems([]);
+  };
 
-  // Hitung total harga
+  const totalItems = cartItems.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
   const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (total, item) => total + item.price * item.quantity,
     0
   );
 
-  return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        addToCart,
-        decreaseFromCart,
-        removeFromCart,
-        clearCart,
-        totalPrice,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
-};
+  const value = {
+    cartItems,
+    addToCart,
+    removeFromCart,
+    decreaseFromCart, // <-- Jangan lupa diekspor
+    clearCart, // <-- Jangan lupa diekspor
+    totalItems,
+    totalPrice,
+  };
 
-export const useCart = () => useContext(CartContext);
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};

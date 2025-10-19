@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
-import CustomDropdown from "../components/CustomDropdown";
-import useScrollAnimation from "../hooks/useScrollAnimation";
+import CustomDropdown from "../components/customDropdown";
 import { useCart } from "../context/cartContext";
+import { motion } from "framer-motion";
 
-// --- Komponen Ikon SVG (agar tidak butuh library eksternal) ---
 const StarIcon = ({ className }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.96c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.96a1 1 0 00-.364-1.118L2.05 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.96z" />
+    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.96c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.96a1 1 0 00-.364-1.118L2.05 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95.69l1.286-3.96z" />
   </svg>
 );
 const SearchIcon = () => (
@@ -51,31 +50,26 @@ const sortOptions = [
 ];
 
 export default function MenuPage() {
-  const { addToCart } = useCart(); // <-- 2. PANGGIL HOOK useCart
-  const [addedItemId, setAddedItemId] = useState(null); // State untuk feedback visual
-  useScrollAnimation();
-
-  const [menuItems, setMenuItems] = useState([]);
+  const { addToCart } = useCart();
+  const [addedItemId, setAddedItemId] = useState(null);
+  const [allMenuItems, setAllMenuItems] = useState([]); // data asli
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("default");
-  const { addToCart } = useCart();
 
-
+  // Fetch data sekali aja
   useEffect(() => {
     const fetchMenuData = async () => {
       try {
         const response = await fetch("/api/menu");
-        if (!response.ok) {
-          throw new Error(
-            "Gagal memuat data. Server mungkin sedang bermasalah."
-          );
-        }
+        if (!response.ok) throw new Error("Gagal memuat data menu.");
         const result = await response.json();
-        setMenuItems(result.data);
+
+        setAllMenuItems(result.data);
+
         const uniqueCategories = [
           "All",
           ...new Set(result.data.map((item) => item.category_name)),
@@ -90,58 +84,49 @@ export default function MenuPage() {
     fetchMenuData();
   }, []);
 
+  // Filter & sort berdasarkan allMenuItems (data asli)
   const filteredMenuItems = useMemo(() => {
-    let items = [...menuItems].filter((item) => {
-      const categoryMatch =
+    let filtered = allMenuItems.filter((item) => {
+      const matchCategory =
         selectedCategory === "All" || item.category_name === selectedCategory;
-      const searchMatch = item.name
+      const matchSearch = item.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      return categoryMatch && searchMatch;
+      return matchCategory && matchSearch;
     });
 
     switch (sortBy) {
       case "price-asc":
-        items.sort((a, b) => a.price - b.price);
-        break;
+        return [...filtered].sort((a, b) => a.price - b.price);
       case "price-desc":
-        items.sort((a, b) => b.price - a.price);
-        break;
+        return [...filtered].sort((a, b) => b.price - a.price);
       case "name-asc":
-        items.sort((a, b) => a.name.localeCompare(b.name));
-        break;
+        return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
       case "name-desc":
-        items.sort((a, b) => b.name.localeCompare(a.name));
-        break;
+        return [...filtered].sort((a, b) => b.name.localeCompare(a.name));
       default:
-        break;
+        return filtered;
     }
-    return items;
-  }, [menuItems, selectedCategory, searchTerm, sortBy]);
+  }, [allMenuItems, selectedCategory, searchTerm, sortBy]);
 
-  // --- 3. GANTI LOGIKA handlePesanClick MENJADI handleAddToCart ---
   const handleAddToCart = (item) => {
     addToCart(item);
     setAddedItemId(item.id);
-    setTimeout(() => {
-      setAddedItemId(null);
-    }, 1500);
+    setTimeout(() => setAddedItemId(null), 1500);
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex justify-center items-center h-screen">
         Memuat menu...
       </div>
     );
-  }
-  if (error) {
+  if (error)
     return (
       <div className="flex justify-center items-center h-screen text-red-500">
         Error: {error}
       </div>
     );
-  }
 
   return (
     <div className="bg-gray-50 text-gray-800">
@@ -153,7 +138,13 @@ export default function MenuPage() {
       </section>
 
       <div className="max-w-7xl mx-auto py-16 px-6 md:px-10">
-        <div className="bg-white p-6 rounded-xl shadow-md mb-12 animate-on-scroll">
+        {/* Search & Filter */}
+        <motion.div
+          className="bg-white p-6 rounded-xl shadow-md mb-12"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <div className="relative md:col-span-2">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -173,31 +164,38 @@ export default function MenuPage() {
               onSelect={setSortBy}
             />
           </div>
+
           <div className="flex flex-wrap justify-center gap-2 mt-4 pt-4 border-t border-gray-200">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${selectedCategory === category
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
+                  selectedCategory === category
                     ? "bg-yellow-400 text-black shadow-md scale-105"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
+                }`}
               >
                 {category}
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
+        {/* Grid Menu */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredMenuItems.length > 0 ? (
             filteredMenuItems.map((item, index) => {
               const isAdded = item.id === addedItemId;
               return (
-                <div
+                <motion.div
                   key={item.id}
                   className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300 flex flex-col animate-on-scroll"
-                  style={{ animationDelay: `${index * 50}ms` }}
+                  style={{ transitionDelay: `${index * 50}ms` }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
                 >
                   <div className="relative h-56 overflow-hidden">
                     <img
@@ -208,7 +206,6 @@ export default function MenuPage() {
                     <span className="absolute top-3 left-3 bg-yellow-400 text-xs font-semibold px-3 py-1 rounded-full text-gray-800 shadow">
                       {item.category_name}
                     </span>
-
                   </div>
                   <div className="p-5 flex flex-col flex-grow">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">
@@ -224,21 +221,23 @@ export default function MenuPage() {
                       <span>(100+)</span>
                     </div>
                     <div className="flex items-center justify-between mt-auto">
-                    <button
-                      onClick={() => handlePesanClick(item.name)}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition"
-                    >
-                      Pesan
-                    </button>
-                    {/* Tombol tambah ke keranjang */}
-                    <button
-                      onClick={() => addToCart(item)}
-                      className="ml-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-semibold transition"
-                    >
-                      +
-                    </button>
+                      <span className="text-lg font-bold text-yellow-500">
+                        Rp{item.price.toLocaleString("id-ID")}
+                      </span>
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        disabled={isAdded}
+                        className={`px-4 py-2 rounded-lg font-semibold transition w-32 ${
+                          isAdded
+                            ? "bg-green-500 text-white cursor-not-allowed"
+                            : "bg-yellow-400 hover:bg-yellow-500 text-black"
+                        }`}
+                      >
+                        {isAdded ? "Ditambahkan ✓" : "Tambah"}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })
           ) : (

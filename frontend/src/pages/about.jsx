@@ -1,8 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import useScrollAnimation from "../hooks/useScrollAnimation"; // Asumsi hook ini sudah ada
+// 1. Import motion
+import { motion } from "framer-motion";
 
-// --- Komponen Ikon SVG (agar rapi) ---
+// --- Komponen Ikon SVG (Tidak berubah) ---
 const CheckIcon = () => (
   <svg
     className="w-6 h-6 text-green-500"
@@ -70,11 +71,11 @@ const ServiceIcon = () => (
     />
   </svg>
 );
+// --- End Komponen Ikon SVG ---
 
 export default function AboutPage() {
-  useScrollAnimation();
-
   const features = [
+    // ... data features (tidak berubah)
     {
       icon: <ChefIcon />,
       title: "Koki Berpengalaman",
@@ -96,6 +97,7 @@ export default function AboutPage() {
   ];
 
   const teamMembers = [
+    // ... data teamMembers (tidak berubah)
     {
       name: "Muhammad Rassya",
       role: "Head Chef",
@@ -118,21 +120,56 @@ export default function AboutPage() {
     },
   ];
 
+  // 2. Definisikan variants
+  const fadeInUpVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
+  const fadeInLeftVariants = {
+    hidden: { opacity: 0, x: -30 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.5 } },
+  };
+
+  const fadeInRightVariants = {
+    hidden: { opacity: 0, x: 30 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.5 } },
+  };
+
+  const staggerContainerVariants = (staggerAmount = 0.15) => ({
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: staggerAmount,
+      },
+    },
+  });
+
   return (
     <div className="bg-white text-gray-800">
-      {/* Hero Section */}
+      {/* Hero Section - Animasi On-Load */}
       <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
+        {/* Tag <motion.h1> diubah jadi <h1> */}
         <h1 className="text-5xl font-bold mb-3">Tentang KateringKu</h1>
+        {/* Tag <motion.p> diubah jadi <p> */}
         <p className="text-lg text-gray-700 max-w-3xl mx-auto">
           Lebih dari sekadar makanan, kami menyajikan kebahagiaan dan kenangan
           di setiap hidangan.
         </p>
       </section>
 
-      {/* Bagian Cerita Kami */}
+      {/* Bagian Cerita Kami - Animasi On-Scroll (Slide-in) */}
       <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="animate-on-scroll" data-animation="fade-in-right">
+        <motion.div
+          className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={staggerContainerVariants(0.2)}
+        >
+          {/* Teks - Fade dari Kanan */}
+          <motion.div variants={fadeInRightVariants}>
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
               Cerita Kami
             </h2>
@@ -147,68 +184,99 @@ export default function AboutPage() {
               kenyamanan layanan katering, membuat setiap acara Anda, baik besar
               maupun kecil, menjadi momen yang tak terlupakan.
             </p>
-            <ul className="space-y-4">
-              <li className="flex items-center text-gray-700 font-medium">
+            {/* Stagger untuk checklist */}
+            <motion.ul
+              className="space-y-4"
+              variants={staggerContainerVariants(0.1)}
+            >
+              <motion.li
+                className="flex items-center text-gray-700 font-medium"
+                variants={fadeInUpVariants}
+              >
                 <CheckIcon />
                 <span className="ml-3">Kualitas Rasa Terjamin</span>
-              </li>
-              <li className="flex items-center text-gray-700 font-medium">
+              </motion.li>
+              <motion.li
+                className="flex items-center text-gray-700 font-medium"
+                variants={fadeInUpVariants}
+              >
                 <CheckIcon />
                 <span className="ml-3">100% Halal dan Higienis</span>
-              </li>
-              <li className="flex items-center text-gray-700 font-medium">
+              </motion.li>
+              <motion.li
+                className="flex items-center text-gray-700 font-medium"
+                variants={fadeInUpVariants}
+              >
                 <CheckIcon />
                 <span className="ml-3">Pengiriman Tepat Waktu</span>
-              </li>
-            </ul>
-          </div>
-          <div
-            className="animate-on-scroll md:order-first"
-            data-animation="fade-in-left"
-          >
+              </motion.li>
+            </motion.ul>
+          </motion.div>
+          {/* Gambar - Fade dari Kiri */}
+          <motion.div className="md:order-first" variants={fadeInLeftVariants}>
             <img
               src="https://placehold.co/800x600/F1C40F/white?text=Dapur+Kami"
               alt="Tim KateringKu"
               className="rounded-2xl shadow-2xl object-cover w-full h-auto"
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* Bagian Mengapa Memilih Kami */}
+      {/* Bagian Mengapa Memilih Kami - Animasi On-Scroll (Stagger) */}
       <section className="py-20 px-6 bg-gray-50 text-center">
-        <h2 className="text-4xl font-bold mb-12 animate-on-scroll">
+        <motion.h2
+          className="text-4xl font-bold mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={fadeInUpVariants}
+        >
           Mengapa Memilih Kami?
-        </h2>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        </motion.h2>
+        <motion.div
+          className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"
+          variants={staggerContainerVariants(0.15)}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+        >
           {features.map((feature, index) => (
-            <div
+            <motion.div
               key={index}
-              className="bg-white p-8 rounded-xl shadow-lg transform hover:-translate-y-2 transition-transform duration-300 animate-on-scroll"
-              style={{ animationDelay: `${index * 0.15}s` }}
+              className="bg-white p-8 rounded-xl shadow-lg transform hover:-translate-y-2 transition-transform duration-300"
+              variants={fadeInUpVariants}
             >
               {feature.icon}
               <h3 className="text-2xl font-semibold mb-3 text-yellow-600">
                 {feature.title}
               </h3>
               <p className="text-gray-600">{feature.description}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
-      {/* Bagian Tim Kami */}
+      {/* Bagian Tim Kami - Animasi On-Scroll (Stagger) */}
       <section className="py-20 px-6 text-center">
-        <h2 className="text-4xl font-bold mb-12 animate-on-scroll">
+        <motion.h2
+          className="text-4xl font-bold mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={fadeInUpVariants}
+        >
           Tim Profesional Kami
-        </h2>
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-4 gap-10">
+        </motion.h2>
+        <motion.div
+          className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-4 gap-10"
+          variants={staggerContainerVariants(0.15)}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+        >
           {teamMembers.map((member, index) => (
-            <div
-              key={index}
-              className="animate-on-scroll"
-              style={{ animationDelay: `${index * 0.15}s` }}
-            >
+            <motion.div key={index} variants={fadeInUpVariants}>
               <div className="relative">
                 <img
                   src={member.image}
@@ -222,14 +290,19 @@ export default function AboutPage() {
                   <p className="text-yellow-300 text-sm">{member.role}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - Animasi On-Scroll */}
       <section className="py-20 bg-yellow-400 text-center text-black">
-        <div className="animate-on-scroll">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={fadeInUpVariants}
+        >
           <h2 className="text-4xl font-bold mb-6">
             Siap Membuat Acara Anda Berkesan?
           </h2>
@@ -242,7 +315,7 @@ export default function AboutPage() {
               Lihat Menu Lengkap
             </button>
           </Link>
-        </div>
+        </motion.div>
       </section>
     </div>
   );

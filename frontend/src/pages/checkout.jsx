@@ -1,14 +1,70 @@
-import React, { useState } from "react";
-import { useCart } from "../context/CartContext";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useCart } from "../context/cartContext";
+import { useAuth } from "../context/authContext";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
-export default function Checkout() {
-  // Mengambil state dan fungsi dari CartContext
+// --- Komponen Ikon SVG untuk Form ---
+const UserIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 text-gray-400"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+    />
+  </svg>
+);
+const PhoneIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 text-gray-400"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+    />
+  </svg>
+);
+const AddressIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 text-gray-400"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+    />
+  </svg>
+);
+
+export default function CheckoutPage() {
   const { cartItems, totalPrice, clearCart } = useCart();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // State untuk data formulir pelanggan
   const [formData, setFormData] = useState({
     customerName: "",
     customerPhone: "",
@@ -17,17 +73,24 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Jika keranjang kosong, arahkan kembali ke menu
-  if (cartItems.length === 0) {
-    navigate("/menu");
-    return null; 
-  }
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        customerName: currentUser.name || "",
+        customerPhone: currentUser.phone || "",
+        customerAddress: currentUser.address || "",
+      });
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (cartItems.length === 0 && !loading) {
+      navigate("/menu");
+    }
+  }, [cartItems, loading, navigate]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -35,133 +98,176 @@ export default function Checkout() {
     setLoading(true);
     setError(null);
 
-    // Persiapkan item pesanan (sesuai skema order_items di SQL Anda)
-    const orderItems = cartItems.map((item) => ({
-      menu_item_id: item.id,
-      quantity: item.quantity,
-      unit_price: item.price,
-    }));
-
-    // Payload pesanan yang akan dikirim ke backend
     const orderPayload = {
       customer_name: formData.customerName,
       customer_phone: formData.customerPhone,
       customer_address: formData.customerAddress,
       total_amount: totalPrice,
-      items: orderItems,
-      // user_id bisa ditambahkan di sini jika Anda sudah menerapkan Auth
-      // user_id: 1, 
+      items: cartItems.map((item) => ({
+        menu_item_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+      })),
+      user_id: currentUser ? currentUser.id : null,
     };
 
     try {
-      // Ganti URL ini dengan endpoint backend Anda
-      const response = await axios.post(
-        "http://localhost:5000/api/orders", 
-        orderPayload
-      );
-      
-      const orderCode = response.data.order.order_code; 
-
-      // Bersihkan keranjang setelah pesanan berhasil
+      const response = await axios.post("/api/orders", orderPayload);
+      const orderCode = response.data.order_code;
       clearCart();
-
-      // Arahkan ke halaman pelacakan pesanan dengan kode pesanan
-      navigate(`/track/${orderCode}`, { state: { orderCode } });
-
+      navigate(`/track-order?code=${orderCode}`, {
+        state: { successMessage: `Pesanan #${orderCode} berhasil dibuat!` },
+      });
     } catch (err) {
-      console.error("Error placing order:", err);
-      setError("Gagal memproses pesanan. Silakan coba lagi.");
+      setError(
+        err.response?.data?.message ||
+          "Gagal memproses pesanan. Silakan coba lagi."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 min-h-[80vh]">
-      <h2 className="text-3xl font-bold mb-6 text-center">Detail Pengiriman & Checkout</h2>
-      
-      <div className="flex flex-col lg:flex-row gap-8">
-        
-        {/* Kolom Kiri: Detail Pelanggan / Form */}
-        <div className="lg:w-1/2 bg-white p-6 rounded-lg shadow-xl">
-          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Informasi Pelanggan</h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-              <input
-                type="text"
-                id="customerName"
-                name="customerName"
-                value={formData.customerName}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700">Nomor Telepon</label>
-              <input
-                type="tel"
-                id="customerPhone"
-                name="customerPhone"
-                value={formData.customerPhone}
-                onChange={handleChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700">Alamat Pengiriman</label>
-              <textarea
-                id="customerAddress"
-                name="customerAddress"
-                value={formData.customerAddress}
-                onChange={handleChange}
-                rows="3"
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-yellow-500 focus:border-yellow-500"
-              ></textarea>
-            </div>
-            
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-gray-800">
+          Checkout Pesanan
+        </h1>
 
-            <button
-              type="submit"
-              disabled={loading || cartItems.length === 0}
-              className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-black transition 
-                ${loading || cartItems.length === 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-yellow-400 hover:bg-yellow-500"
-                }`}
-            >
-              {loading ? "Memproses..." : `Pesan Sekarang - Rp${totalPrice.toLocaleString("id-ID")}`}
-            </button>
-          </form>
-        </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Form Pengiriman */}
+          <div className="lg:w-3/5 bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+            <h3 className="text-2xl font-semibold mb-6 border-b pb-4 text-gray-700">
+              Detail Pengiriman
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* --- PERBAIKAN STRUKTUR INPUT --- */}
+              <div>
+                <label
+                  htmlFor="customerName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Nama Lengkap
+                </label>
+                <div className="relative mt-1">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <UserIcon />
+                  </div>
+                  <input
+                    type="text"
+                    id="customerName"
+                    name="customerName"
+                    value={formData.customerName}
+                    onChange={handleChange}
+                    required
+                    className="block w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  htmlFor="customerPhone"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Nomor Telepon
+                </label>
+                <div className="relative mt-1">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <PhoneIcon />
+                  </div>
+                  <input
+                    type="tel"
+                    id="customerPhone"
+                    name="customerPhone"
+                    value={formData.customerPhone}
+                    onChange={handleChange}
+                    required
+                    className="block w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  htmlFor="customerAddress"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Alamat Pengiriman
+                </label>
+                <div className="relative mt-1">
+                  <div className="absolute top-4 left-0 pl-4 flex items-center pointer-events-none">
+                    <AddressIcon />
+                  </div>
+                  <textarea
+                    id="customerAddress"
+                    name="customerAddress"
+                    value={formData.customerAddress}
+                    onChange={handleChange}
+                    rows="4"
+                    required
+                    className="block w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition resize-none"
+                  ></textarea>
+                </div>
+              </div>
+              {/* --- BATAS PERBAIKAN --- */}
 
-        {/* Kolom Kanan: Ringkasan Pesanan */}
-        <div className="lg:w-1/2 bg-gray-50 p-6 rounded-lg shadow-xl">
-          <h3 className="text-xl font-semibold mb-4 border-b pb-2">Ringkasan Pesanan ({cartItems.length} Item)</h3>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {cartItems.map((item) => (
-              <div key={item.id} className="flex justify-between items-center text-sm border-b last:border-b-0 pb-2">
-                <p className="text-gray-700">
-                  {item.name} <span className="font-semibold text-yellow-600">x{item.quantity}</span>
+              {error && (
+                <p className="text-red-600 text-sm bg-red-100 p-3 rounded-md">
+                  {error}
                 </p>
-                <p className="font-medium">
-                  Rp{(item.price * item.quantity).toLocaleString("id-ID")}
+              )}
+              <button
+                type="submit"
+                disabled={loading || cartItems.length === 0}
+                className={`w-full py-3 px-4 rounded-lg shadow-lg text-md font-bold text-black transition transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 ${
+                  loading || cartItems.length === 0
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-yellow-400 hover:bg-yellow-500"
+                }`}
+              >
+                {loading
+                  ? "Memproses..."
+                  : `Pesan Sekarang - Rp${totalPrice.toLocaleString("id-ID")}`}
+              </button>
+            </form>
+          </div>
+
+          {/* Ringkasan Pesanan */}
+          <div className="lg:w-2/5 bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-fit">
+            <h3 className="text-2xl font-semibold mb-6 border-b pb-4 text-gray-700">
+              Ringkasan Pesanan
+            </h3>
+            <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+              {cartItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex justify-between items-center text-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                    />
+                    <div>
+                      <p className="text-gray-800 font-semibold">{item.name}</p>
+                      <p className="text-gray-500">x{item.quantity}</p>
+                    </div>
+                  </div>
+                  <p className="font-semibold text-gray-800">
+                    Rp{(item.price * item.quantity).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 pt-4 border-t-2 border-dashed border-gray-200">
+              <div className="flex justify-between items-center text-lg font-bold text-gray-900">
+                <p>Total Pembayaran</p>
+                <p className="text-2xl font-extrabold text-yellow-600">
+                  Rp{totalPrice.toLocaleString("id-ID")}
                 </p>
               </div>
-            ))}
-          </div>
-          
-          <div className="mt-4 pt-4 border-t border-gray-300 flex justify-between items-center">
-            <p className="text-lg font-bold">Total Pembayaran:</p>
-            <p className="text-xl font-extrabold text-red-600">
-              Rp{totalPrice.toLocaleString("id-ID")}
-            </p>
+            </div>
           </div>
         </div>
       </div>

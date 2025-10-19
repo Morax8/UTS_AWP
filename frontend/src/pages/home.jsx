@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+// 1. Import motion dari framer-motion
+import { motion } from "framer-motion";
 import heroImage from "/images/hero-catering.jpg";
-import useScrollAnimation from "../hooks/useScrollAnimation";
 
-// --- Komponen Ikon SVG untuk 'Keunggulan' (agar tidak perlu install library) ---
+// --- Komponen Ikon SVG (Tidak berubah) ---
 const FreshIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -60,13 +61,13 @@ const TasteIcon = () => (
 );
 
 export default function HomePage() {
-  useScrollAnimation();
   const [featuredMenu, setFeaturedMenu] = useState([]);
 
   useEffect(() => {
-    // Ambil data menu favorit dari backend
+    // ... (logika fetch data tidak berubah)
     const fetchFeaturedMenu = async () => {
       try {
+        // Simulasi fetch data (gantilah dengan API-mu)
         const response = await fetch("/api/menu/featured");
         const result = await response.json();
         if (result.success) {
@@ -80,6 +81,7 @@ export default function HomePage() {
   }, []);
 
   const features = [
+    // ... (data features tidak berubah)
     {
       icon: <FreshIcon />,
       title: "Bahan Segar",
@@ -97,6 +99,42 @@ export default function HomePage() {
     },
   ];
 
+  // 2. Definisikan variants untuk animasi
+
+  // Variants untuk Hero Section (Stagger on Load)
+  const heroContainerVariants = {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.3, // Jeda antar elemen (0.3s)
+      },
+    },
+  };
+
+  const heroItemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
+  // Variants untuk Section Lain (Fade In Up on Scroll)
+  const fadeInUpVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
+  // Variants untuk Grid (Stagger on Scroll)
+  // Kita buat sebagai fungsi agar bisa mengatur delay stagger
+  const staggerContainerVariants = (staggerAmount = 0.15) => ({
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: staggerAmount,
+      },
+    },
+  });
+
   console.log("Featured Menu:", featuredMenu);
 
   return (
@@ -107,20 +145,30 @@ export default function HomePage() {
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="absolute inset-0 bg-black/60"></div>
-        <div className="relative z-10 max-w-3xl mx-auto text-white px-4">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 animate-fade-in">
+        {/* 3. Terapkan motion.div dengan variants, initial, dan animate untuk animasi 'on load' */}
+        <motion.div
+          className="relative z-10 max-w-3xl mx-auto text-white px-4"
+          variants={heroContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* 4. Terapkan variants 'item' pada children */}
+          <motion.h1
+            className="text-5xl md:text-6xl font-extrabold mb-6"
+            variants={heroItemVariants}
+          >
             Nikmati <span className="text-yellow-400">Masakan Rumahan</span>{" "}
             yang Lezat
-          </h1>
-          <p
-            className="text-lg md:text-xl mb-8 animate-fade-in"
-            style={{ animationDelay: "0.3s" }}
+          </motion.h1>
+          <motion.p
+            className="text-lg md:text-xl mb-8"
+            variants={heroItemVariants}
           >
             Disajikan dengan cinta, dari dapur kami langsung ke meja Anda.
-          </p>
-          <div
-            className="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in"
-            style={{ animationDelay: "0.6s" }}
+          </motion.p>
+          <motion.div
+            className="flex flex-col sm:flex-row justify-center gap-4"
+            variants={heroItemVariants}
           >
             <Link to="/menu">
               <button className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-3 rounded-lg transition-transform transform hover:scale-105 w-full sm:w-auto">
@@ -132,24 +180,29 @@ export default function HomePage() {
                 Hubungi Kami
               </button>
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Tentang Kami - Layout Diperbaiki */}
       <section className="py-20 px-6 md:px-10 bg-gray-50">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="animate-on-scroll">
+        {/* 5. Terapkan animasi 'on scroll' dengan whileInView dan viewport */}
+        {/* Kita gunakan stagger juga di sini untuk gambar dan teks */}
+        <motion.div
+          className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
+          variants={staggerContainerVariants(0.2)}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <motion.div variants={fadeInUpVariants}>
             <img
               src="https://placehold.co/600x400/ECF0F1/black?text=Tim+kami"
               alt="Tentang KateringKu"
               className="rounded-2xl shadow-xl w-full h-auto object-cover"
             />
-          </div>
-          <div
-            className="text-left animate-on-scroll"
-            style={{ animationDelay: "0.2s" }}
-          >
+          </motion.div>
+          <motion.div className="text-left" variants={fadeInUpVariants}>
             <h2 className="text-4xl font-bold mb-6 text-gray-900">
               Selamat Datang di KateringKu
             </h2>
@@ -166,21 +219,35 @@ export default function HomePage() {
                 </span>
               </button>
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Menu Favorit - Dinamis */}
       <section className="py-20 px-6 md:px-10 bg-yellow-50 text-center">
-        <h2 className="text-4xl font-bold mb-12 animate-on-scroll">
+        <motion.h2
+          className="text-4xl font-bold mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={fadeInUpVariants}
+        >
           Menu Favorit Pilihan
-        </h2>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 ">
-          {featuredMenu.map((item, index) => (
-            <div
+        </motion.h2>
+        {/* 6. Terapkan container staggering pada grid menu */}
+        <motion.div
+          className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10 "
+          variants={staggerContainerVariants(0.15)} // delay 0.15s antar kartu
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }} // Trigger saat 10% grid terlihat
+        >
+          {featuredMenu.map((item) => (
+            // 7. Terapkan item variants pada children (kartu)
+            <motion.div
               key={item.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 animate-on-scroll"
-              style={{ animationDelay: `${index * 0.15}s` }} // Animasi Staggered
+              className="bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300"
+              variants={fadeInUpVariants}
             >
               <img
                 src={`${item.image_url}`}
@@ -198,36 +265,54 @@ export default function HomePage() {
                   </button>
                 </Link>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* Keunggulan */}
       <section className="py-20 px-6 md:px-10 bg-white text-center">
-        <h2 className="text-4xl font-bold mb-12 animate-on-scroll">
+        <motion.h2
+          className="text-4xl font-bold mb-12"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={fadeInUpVariants}
+        >
           Mengapa Pilih Kami?
-        </h2>
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+        </motion.h2>
+        {/* Terapkan logika yang sama untuk grid Keunggulan */}
+        <motion.div
+          className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"
+          variants={staggerContainerVariants(0.15)}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+        >
           {features.map((item, i) => (
-            <div
+            <motion.div
               key={i}
-              className="p-8 border border-gray-200 rounded-xl shadow-sm hover:shadow-xl hover:border-yellow-300 transition-all duration-300 animate-on-scroll"
-              style={{ animationDelay: `${i * 0.15}s` }} // Animasi Staggered
+              className="p-8 border border-gray-200 rounded-xl shadow-sm hover:shadow-xl hover:border-yellow-300 transition-all duration-300"
+              variants={fadeInUpVariants}
             >
               <div className="flex justify-center mb-4">{item.icon}</div>
               <h3 className="text-2xl font-semibold mb-3 text-yellow-600">
                 {item.title}
               </h3>
               <p className="text-gray-600">{item.desc}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 bg-yellow-400 text-center text-black">
-        <div className="animate-on-scroll">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }}
+          variants={fadeInUpVariants}
+        >
           <h2 className="text-4xl font-bold mb-6">Pesan Katering Sekarang!</h2>
           <p className="text-lg mb-8 max-w-xl mx-auto">
             Nikmati makanan rumahan dengan rasa yang tak terlupakan. Cocok untuk
@@ -238,7 +323,7 @@ export default function HomePage() {
               Lihat Menu Lengkap
             </button>
           </Link>
-        </div>
+        </motion.div>
       </section>
     </div>
   );
