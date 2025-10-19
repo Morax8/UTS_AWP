@@ -244,8 +244,6 @@ export default function AboutPage() {
           </Link>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }

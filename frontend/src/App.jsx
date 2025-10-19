@@ -15,6 +15,7 @@ import Track from "./pages/track";
 import MasterPesanan from "./pages/admin/masterPesanan";
 import Cart from "./pages/cart";
 import Checkout from "./pages/checkout";
+import ProfilePage from "./pages/profile";
 
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
@@ -29,23 +30,22 @@ function App() {
         {/* Navbar atau header bisa ditaruh di sini */}
         <ScrollToTop />
         <Navbar />
-
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact-us" element={<Contact />} />
-          <Route path="/menu" element={<Menu />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/laporan" element={<Laporan />} />
-          <Route path="/admin/master-menu" element={<MasterMenu />} />
-          <Route path="/faq" element={<Faq />} />
-          <Route path="/track" element={<Track />} />
-          <Route path="/admin/master-pesanan" element={<MasterPesanan />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact-us" element={<Contact />} />
+        <Route path="/menu" element={<Menu />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/laporan" element={<Laporan />} />
+        <Route path="/admin/master-menu" element={<MasterMenu />} />
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/track" element={<Track />} />
+        <Route path="/admin/master-pesanan" element={<MasterPesanan />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/profile" element={<ProfilePage />} />
           <Route path="/not-found" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

@@ -7,6 +7,9 @@ const db = require("./config/db");
 const menuRoutes = require("./routes/menuRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes"); // <-- Tambahkan ini
+
 // const pesananRoutes = require('./routes/pesananRoutes'); // Nanti diaktifkan jika sudah dibuat
 
 const app = express();
@@ -20,6 +23,9 @@ app.use(express.json());
 app.use("/api/menu", menuRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/auth", authRoutes); // <-- TAMBAHKAN INI
+app.use("/api/users", userRoutes); // <-- Tambahkan ini
+
 // app.use('/api/pesanan', pesananRoutes); // Nanti diaktifkan jika sudah dibuat
 
 // Route opsional untuk testing koneksi database
