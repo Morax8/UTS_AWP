@@ -159,6 +159,59 @@ app.get("/api/dashboard/simple", async (req, res) => {
   }
 });
 
+// Route untuk debug chart data
+app.get("/api/dashboard/debug", async (req, res) => {
+  try {
+    console.log("Debugging chart data...");
+
+    // Test top menus
+    const [topMenus] = await db.query(`
+      SELECT mi.name, SUM(oi.quantity) as total_sold
+      FROM order_items oi
+      JOIN menu_items mi ON oi.menu_item_id = mi.id
+      GROUP BY mi.id, mi.name
+      ORDER BY total_sold DESC
+      LIMIT 5
+    `);
+
+    // Test daily sales
+    const [dailySales] = await db.query(`
+      SELECT DATE_FORMAT(created_at, '%d %b') as day, SUM(total_amount) as sales 
+      FROM orders 
+      WHERE created_at >= CURDATE() - INTERVAL 7 DAY
+      GROUP BY DATE(created_at)
+      ORDER BY DATE(created_at) ASC
+    `);
+
+    // Test category sales
+    const [categorySales] = await db.query(`
+      SELECT mc.name, SUM(oi.quantity * oi.unit_price) as category_total
+      FROM order_items oi
+      JOIN menu_items mi ON oi.menu_item_id = mi.id
+      JOIN menu_categories mc ON mi.category_id = mc.id
+      JOIN orders o ON oi.order_id = o.id
+      WHERE MONTH(o.created_at) = MONTH(CURDATE()) AND YEAR(o.created_at) = YEAR(CURDATE())
+      GROUP BY mc.id, mc.name
+      ORDER BY category_total DESC
+    `);
+
+    res.json({
+      success: true,
+      data: {
+        topMenus: topMenus,
+        dailySales: dailySales,
+        categorySales: categorySales
+      }
+    });
+  } catch (error) {
+    console.error("Debug chart error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Route untuk insert sample data
 app.get("/api/menu/init", async (req, res) => {
   try {
@@ -219,12 +272,20 @@ app.get("/api/menu/init", async (req, res) => {
       )
     `);
 
+    // Insert menu categories
+    await db.query(`
+      INSERT IGNORE INTO menu_categories (id, name, description) VALUES
+      (1, 'Makanan Utama', 'Menu makanan utama'),
+      (2, 'Minuman', 'Menu minuman'),
+      (3, 'Snack', 'Menu snack dan kue')
+    `);
+
     // Insert sample data
     await db.query(`
-      INSERT IGNORE INTO menu_items (name, description, price, image_url, is_active, is_featured) VALUES
-      ('Nasi Kuning', 'Nasi kuning dengan lauk pauk lengkap', 15000, '/images/nasi-kuning.jpg', TRUE, TRUE),
-      ('Rendang', 'Rendang daging sapi yang empuk', 25000, '/images/rendang.jpg', TRUE, TRUE),
-      ('Soto Ayam', 'Soto ayam dengan kuah bening', 18000, '/images/soto.jpg', TRUE, TRUE)
+      INSERT IGNORE INTO menu_items (name, description, price, image_url, category_id, is_active, is_featured) VALUES
+      ('Nasi Kuning', 'Nasi kuning dengan lauk pauk lengkap', 15000, '/images/nasi-kuning.jpg', 1, TRUE, TRUE),
+      ('Rendang', 'Rendang daging sapi yang empuk', 25000, '/images/rendang.jpg', 1, TRUE, TRUE),
+      ('Soto Ayam', 'Soto ayam dengan kuah bening', 18000, '/images/soto.jpg', 1, TRUE, TRUE)
     `);
 
     // Insert admin user (password: admin123)

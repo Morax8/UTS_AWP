@@ -10,3 +10,4 @@
 		Backend: Express
 		DB: Aiven DB(MySQL)
 		Storage: ByteScale(storing images)
+*notes: kalua abis di refresh jadi 404, Kembali ke home dari link no 1
