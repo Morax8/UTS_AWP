@@ -1,0 +1,12 @@
+1. Website link: https://uts-awp-1.onrender.com/
+2. user login admin : admin@admin.com | admin123
+3. Group member : 
+	1. Aditya Zianur Rahman Setiadi (00000128409) roles : backend(all) and deploy to hosting
+	2. Khairiansyah Hafizh (00000128661) roles : designing the UI/UX and collecting data for the web
+	3. Muhammad Rassya (00000138554) roles : Frontend
+	4. Raditya Agra  (00000138599) roles : Frontend
+4. GitHub Link: https://github.com/Morax8/UTS_AWP
+5. Tech Stack: 	Frontend: React
+		Backend: Express
+		DB: Aiven DB(MySQL)
+		Storage: ByteScale(storing images)

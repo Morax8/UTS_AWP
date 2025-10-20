@@ -26,5 +26,9 @@ export default defineConfig({
       },
     },
   },
+  // Untuk SPA routing di production
+  preview: {
+    historyApiFallback: true,
+  },
 });
 

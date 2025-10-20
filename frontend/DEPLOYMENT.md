@@ -34,6 +34,7 @@ Pastikan `package.json` memiliki script build yang benar:
 4. **Publish Directory**: `dist`
 5. **Environment Variables**: 
    - `VITE_API_URL`: `https://your-backend-app.onrender.com`
+6. **Important**: File `_redirects` sudah dibuat untuk handle React Router
 
 ### Backend (Web Service)
 
