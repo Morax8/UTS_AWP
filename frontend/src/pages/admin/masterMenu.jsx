@@ -40,11 +40,12 @@ export default function MasterMenu() {
     setLoading(true);
     try {
       const token = localStorage.getItem("authToken");
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const [menuRes, catRes] = await Promise.all([
-        fetch("/api/menu/all", {
+        fetch(`${apiUrl}/api/menu/all`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch("/api/categories", {
+        fetch(`${apiUrl}/api/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -96,7 +97,8 @@ export default function MasterMenu() {
     ) {
       try {
         const token = localStorage.getItem("authToken");
-        const response = await fetch(`/api/menu/${id}`, {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/menu/${id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });

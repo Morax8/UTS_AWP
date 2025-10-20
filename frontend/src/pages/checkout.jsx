@@ -112,7 +112,8 @@ export default function CheckoutPage() {
     };
 
     try {
-      const response = await axios.post("/api/orders", orderPayload);
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await axios.post(`${apiUrl}/api/orders`, orderPayload);
       const orderCode = response.data.order_code;
       clearCart();
       navigate(`/track-order?code=${orderCode}`, {

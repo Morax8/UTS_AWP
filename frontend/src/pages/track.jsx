@@ -89,8 +89,9 @@ export default function TrackPage() {
     setOrderData(null);
     setError("");
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(
-        `/api/orders/track?search=${encodeURIComponent(searchTerm)}`
+        `${apiUrl}/api/orders/track?search=${encodeURIComponent(searchTerm)}`
       );
       const result = await response.json();
       if (!response.ok) {

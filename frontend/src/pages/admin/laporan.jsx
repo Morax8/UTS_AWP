@@ -73,8 +73,9 @@ export default function LaporanPage() {
       setError(null);
       try {
         const token = localStorage.getItem("authToken");
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const response = await axios.get(
-          `/api/reports?${
+          `${apiUrl}/api/reports?${
             filterMonth === "all"
               ? `year=${filterYear}`
               : `month=${filterMonth}&year=${filterYear}`

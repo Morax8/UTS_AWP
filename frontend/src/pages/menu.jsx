@@ -64,7 +64,8 @@ export default function MenuPage() {
   useEffect(() => {
     const fetchMenuData = async () => {
       try {
-        const response = await fetch("/api/menu");
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/menu`);
         if (!response.ok) throw new Error("Gagal memuat data menu.");
         const result = await response.json();
 

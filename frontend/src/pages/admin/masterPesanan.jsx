@@ -48,7 +48,8 @@ export default function MasterPesanan() {
   // Update status pesanan
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await axios.put(`/api/orders/${id}/status`, { status: newStatus });
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      await axios.put(`${apiUrl}/api/orders/${id}/status`, { status: newStatus });
       setPesananData((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
       );
@@ -64,7 +65,8 @@ export default function MasterPesanan() {
     if (!window.confirm("Yakin mau hapus pesanan ini?")) return;
 
     try {
-      await axios.delete(`/api/orders/${id}`);
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      await axios.delete(`${apiUrl}/api/orders/${id}`);
       setPesananData((prev) => prev.filter((p) => p.id !== id));
       alert("Pesanan berhasil dihapus!");
     } catch (error) {
