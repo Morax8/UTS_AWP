@@ -48,14 +48,61 @@ const getDashboardStats = async (req, res) => {
       console.log("Menu items query failed:", err.message);
     }
 
+    // 3. Top Menus (simplified)
+    let topMenus = [];
+    try {
+      const [topMenusResult] = await db.query(`
+        SELECT mi.name, SUM(oi.quantity) as total_sold
+        FROM order_items oi
+        JOIN menu_items mi ON oi.menu_item_id = mi.id
+        GROUP BY mi.id, mi.name
+        ORDER BY total_sold DESC
+        LIMIT 5
+      `);
+      topMenus = topMenusResult;
+    } catch (err) {
+      console.log("Top menus query failed:", err.message);
+    }
+
+    // 4. Daily Sales (simplified)
+    let dailySales = [];
+    try {
+      const [dailySalesResult] = await db.query(`
+        SELECT DATE_FORMAT(created_at, '%d %b') as day, SUM(total_amount) as sales 
+        FROM orders 
+        WHERE created_at >= CURDATE() - INTERVAL 7 DAY
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at) ASC
+      `);
+      dailySales = dailySalesResult;
+    } catch (err) {
+      console.log("Daily sales query failed:", err.message);
+    }
+
+    // 5. Category Sales (simplified)
+    let categorySales = [];
+    try {
+      const [categorySalesResult] = await db.query(`
+        SELECT 'Makanan Utama' as name, SUM(oi.quantity * oi.unit_price) as category_total
+        FROM order_items oi
+        JOIN menu_items mi ON oi.menu_item_id = mi.id
+        JOIN orders o ON oi.order_id = o.id
+        WHERE mi.category_id = 1
+        GROUP BY mi.category_id
+      `);
+      categorySales = categorySalesResult;
+    } catch (err) {
+      console.log("Category sales query failed:", err.message);
+    }
+
     const stats = {
       totalOrdersThisMonth: ordersThisMonth,
       totalRevenueThisMonth: revenueThisMonth,
       totalCustomers: totalCustomers,
       totalMenuItems: totalMenuItems,
-      topMenus: [],
-      dailySales: [],
-      categorySales: [],
+      topMenus: topMenus,
+      dailySales: dailySales,
+      categorySales: categorySales,
     };
 
     console.log("Dashboard stats:", stats);

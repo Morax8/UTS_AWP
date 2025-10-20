@@ -233,6 +233,25 @@ app.get("/api/menu/init", async (req, res) => {
       ('Admin', 'admin@kateringku.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin')
     `);
 
+    // Insert sample orders for charts
+    await db.query(`
+      INSERT IGNORE INTO orders (order_code, customer_name, customer_phone, customer_address, total_amount, status, created_at) VALUES
+      ('ORD001', 'John Doe', '08123456789', 'Jl. Contoh No. 1', 50000, 'delivered', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+      ('ORD002', 'Jane Smith', '08123456790', 'Jl. Contoh No. 2', 75000, 'delivered', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+      ('ORD003', 'Bob Johnson', '08123456791', 'Jl. Contoh No. 3', 60000, 'delivered', DATE_SUB(NOW(), INTERVAL 3 DAY))
+    `);
+
+    // Insert sample order items
+    await db.query(`
+      INSERT IGNORE INTO order_items (order_id, menu_item_id, quantity, unit_price) VALUES
+      (1, 1, 2, 15000),
+      (1, 2, 1, 25000),
+      (2, 1, 3, 15000),
+      (2, 3, 2, 18000),
+      (3, 2, 1, 25000),
+      (3, 3, 2, 18000)
+    `);
+
     res.json({
       success: true,
       message: "All tables and sample data created successfully"
