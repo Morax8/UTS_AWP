@@ -159,6 +159,37 @@ app.get("/api/dashboard/simple", async (req, res) => {
   }
 });
 
+// Route untuk test orders
+app.get("/api/orders/test", async (req, res) => {
+  try {
+    console.log("Testing orders endpoint...");
+
+    const [orders] = await db.query(`
+      SELECT 
+        o.id AS order_id,
+        o.order_code,
+        o.customer_name,
+        o.total_amount,
+        o.status,
+        o.created_at
+      FROM orders o
+      ORDER BY o.created_at DESC
+      LIMIT 10
+    `);
+
+    res.json({
+      success: true,
+      data: orders
+    });
+  } catch (error) {
+    console.error("Orders test error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Route untuk debug chart data
 app.get("/api/dashboard/debug", async (req, res) => {
   try {
@@ -179,7 +210,7 @@ app.get("/api/dashboard/debug", async (req, res) => {
       SELECT DATE_FORMAT(created_at, '%d %b') as day, SUM(total_amount) as sales 
       FROM orders 
       WHERE created_at >= CURDATE() - INTERVAL 7 DAY
-      GROUP BY DATE(created_at)
+      GROUP BY DATE(created_at), DATE_FORMAT(created_at, '%d %b')
       ORDER BY DATE(created_at) ASC
     `);
 

@@ -64,7 +64,7 @@ const getDashboardStats = async (req, res) => {
         `SELECT DATE_FORMAT(created_at, '%d %b') as day, SUM(total_amount) as sales 
          FROM orders 
          WHERE created_at >= CURDATE() - INTERVAL 7 DAY
-         GROUP BY DATE(created_at)
+         GROUP BY DATE(created_at), DATE_FORMAT(created_at, '%d %b')
          ORDER BY DATE(created_at) ASC`
       );
       dailySales = dailySalesResult;
