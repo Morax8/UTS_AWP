@@ -9,22 +9,23 @@ const uploadManager = new UploadManager({
 // @access  Public
 const getAllMenuItems = async (req, res) => {
   try {
+    console.log("Fetching all menu items...");
     const query = `
       SELECT 
-        mi.id, 
-        mi.name, 
-        mi.description, 
-        mi.price, 
-        mi.image_url,
-        mi.is_active, 
-        mc.name AS category_name 
-      FROM menu_items mi
-      JOIN menu_categories mc ON mi.category_id = mc.id
-      WHERE mi.is_active = TRUE
-      ORDER BY mi.id;
+        id, 
+        name, 
+        description, 
+        price, 
+        image_url,
+        is_active,
+        category_id
+      FROM menu_items
+      WHERE is_active = TRUE
+      ORDER BY id;
     `;
 
     const [rows] = await db.query(query);
+    console.log("Menu items found:", rows.length);
 
     res.status(200).json({
       success: true,
@@ -33,7 +34,7 @@ const getAllMenuItems = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching menu items:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -41,9 +42,9 @@ const getFeaturedMenuItems = async (req, res) => {
   try {
     console.log("Fetching featured menu items...");
     const query = `
-      SELECT id, name, description, image_url 
+      SELECT id, name, description, image_url, price
       FROM menu_items
-      WHERE is_active = TRUE AND is_featured = TRUE
+      WHERE is_active = TRUE
       ORDER BY id DESC
       LIMIT 3;
     `;

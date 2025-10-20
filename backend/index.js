@@ -62,6 +62,22 @@ app.get("/api/test", (req, res) => {
   });
 });
 
+// Route untuk test menu tanpa database
+app.get("/api/menu/simple", (req, res) => {
+  res.json({
+    success: true,
+    data: [
+      {
+        id: 1,
+        name: "Nasi Kuning",
+        description: "Nasi kuning dengan lauk pauk lengkap",
+        image_url: "/images/nasi-kuning.jpg",
+        price: 15000
+      }
+    ]
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server berjalan di port ${PORT}`);
 });
