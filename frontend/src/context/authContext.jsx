@@ -1,38 +1,63 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-// 1. Buat Context
-const AuthContext = createContext(null);
+const AuthContext = createContext();
 
-// 2. Buat Provider (Komponen yang akan "membungkus" aplikasi)
+export const useAuth = () => useContext(AuthContext);
+
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem("authToken"));
+  const [loading, setLoading] = useState(true); // State untuk loading pengecekan auth
+  const navigate = useNavigate();
 
-  // Cek localStorage saat aplikasi pertama kali dimuat
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-  }, []);
+    // Cek token saat aplikasi pertama kali dimuat
+    const checkUser = async () => {
+      if (token) {
+        try {
+          // Di dunia nyata, kamu akan mem-validasi token ini ke server
+          // Untuk sekarang, kita asumsikan token di localStorage = user valid
+          // Kamu bisa decode token untuk mendapatkan data user
+          const storedUser = JSON.parse(localStorage.getItem("user"));
+          if (storedUser) {
+            setUser(storedUser);
+          } else {
+            // Jika tidak ada user di storage, hapus token
+            localStorage.removeItem("authToken");
+            setToken(null);
+          }
+        } catch (error) {
+          console.error("Gagal memuat data user:", error);
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
+          setToken(null);
+          setUser(null);
+        }
+      }
+      setLoading(false); // Selesai pengecekan
+    };
 
-  const login = (userData, token) => {
+    checkUser();
+  }, [token]);
+
+  const login = (userData, authToken) => {
+    localStorage.setItem("authToken", authToken);
     localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("authToken", token);
-    setCurrentUser(userData);
+    setToken(authToken);
+    setUser(userData);
+    // Navigasi sudah di-handle di halaman login
   };
 
   const logout = () => {
-    localStorage.removeItem("user");
     localStorage.removeItem("authToken");
-    setCurrentUser(null);
+    localStorage.removeItem("user");
+    setToken(null);
+    setUser(null);
+    navigate("/login"); // Redirect ke login setelah logout
   };
 
-  const value = { currentUser, login, logout };
+  const value = { user, token, loading, login, logout };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-// 3. Buat custom hook untuk memudahkan pemakaian context
-export const useAuth = () => {
-  return useContext(AuthContext);
 };

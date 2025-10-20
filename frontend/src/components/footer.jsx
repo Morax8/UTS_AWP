@@ -1,8 +1,13 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FaFacebookF, FaTwitter, FaYoutube, FaInstagram } from "react-icons/fa";
 
 const Footer = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  if (isAdminRoute) return null; // jangan render footer kalau di admin
+
   const socialLinks = [
     { icon: <FaFacebookF />, href: "#" },
     { icon: <FaTwitter />, href: "#" },

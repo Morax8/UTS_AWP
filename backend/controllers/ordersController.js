@@ -148,7 +148,88 @@ const createOrder = async (req, res) => {
   }
 };
 
+// --- FUNGSI UNTUK AMBIL SEMUA PESANAN ---
+// @route   GET /api/orders
+// @access  Admin
+const getAllOrders = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        o.id AS order_id,
+        o.order_code,
+        o.customer_name,
+        o.total_amount,
+        o.status,
+        mi.name AS menu_name,
+        oi.quantity
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+      ORDER BY o.id DESC;
+    `);
+
+    const ordersMap = {};
+    rows.forEach((row) => {
+      if (!ordersMap[row.order_id]) {
+        ordersMap[row.order_id] = {
+          id: row.order_id,
+          order_code: row.order_code,
+          customer_name: row.customer_name,
+          total_amount: row.total_amount,
+          status: row.status,
+          items: [],
+        };
+      }
+
+      if (row.menu_name) {
+        ordersMap[row.order_id].items.push({
+          menu_name: row.menu_name,
+          quantity: row.quantity,
+        });
+      }
+    });
+
+    res.json({ success: true, data: Object.values(ordersMap) });
+  } catch (err) {
+    console.error("Gagal ambil data:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// UPDATE STATUS PESANAN
+const updateOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    await db.query("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+    res.json({ success: true, message: "Status pesanan berhasil diperbarui." });
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Gagal memperbarui status." });
+  }
+};
+
+// HAPUS PESANAN
+const deleteOrder = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query("DELETE FROM orders WHERE id = ?", [id]);
+    res.json({ success: true, message: "Pesanan berhasil dihapus." });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Gagal menghapus pesanan." });
+  }
+};
+
 module.exports = {
   trackOrder,
-  createOrder, // <-- Ekspor fungsi baru
+  createOrder,
+  getAllOrders,
+  updateOrderStatus,
+  deleteOrder,
 };

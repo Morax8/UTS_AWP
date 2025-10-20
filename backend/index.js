@@ -10,8 +10,8 @@ const contactRoutes = require("./routes/contactRoutes");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-
-// const pesananRoutes = require('./routes/pesananRoutes'); // Nanti diaktifkan jika sudah dibuat
+const categoryRoutes = require("./routes/categoryRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,8 +27,8 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
-// app.use('/api/pesanan', pesananRoutes); // Nanti diaktifkan jika sudah dibuat
+app.use("/api/categories", categoryRoutes);
+app.use("/api/reports", reportRoutes);
 
 // Route opsional untuk testing koneksi database
 app.get("/api/test-db", async (req, res) => {

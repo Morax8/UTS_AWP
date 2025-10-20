@@ -118,7 +118,7 @@ export default function Dashboard() {
 
           <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 flex justify-between items-center">
             <div>
-              <p className="text-gray-500 text-sm">Total Pemasukan</p>
+              <p className="text-gray-500 text-sm">Total Pemasukan Bulan Ini</p>
               <h3 className="text-4xl font-extrabold text-green-600 mt-1">
                 {formatRupiah(stats?.totalRevenueThisMonth)}
               </h3>
