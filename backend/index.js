@@ -99,6 +99,80 @@ app.get("/api/menu/simple", (req, res) => {
   });
 });
 
+// Route untuk test database query
+app.get("/api/menu/debug", async (req, res) => {
+  try {
+    console.log("Testing database query...");
+
+    // Test simple query
+    const [result] = await db.query("SELECT 1 as test");
+    console.log("Simple query result:", result);
+
+    // Test table existence
+    const [tables] = await db.query("SHOW TABLES");
+    console.log("Tables found:", tables);
+
+    // Test menu_items table
+    const [menuItems] = await db.query("SELECT COUNT(*) as count FROM menu_items");
+    console.log("Menu items count:", menuItems);
+
+    res.json({
+      success: true,
+      simpleQuery: result,
+      tables: tables,
+      menuItemsCount: menuItems[0].count
+    });
+  } catch (error) {
+    console.error("Database debug error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
+
+// Route untuk insert sample data
+app.get("/api/menu/init", async (req, res) => {
+  try {
+    console.log("Initializing sample data...");
+
+    // Create tables if not exist
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS menu_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        image_url VARCHAR(500),
+        category_id INT,
+        is_active BOOLEAN DEFAULT TRUE,
+        is_featured BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Insert sample data
+    await db.query(`
+      INSERT IGNORE INTO menu_items (name, description, price, image_url, is_active, is_featured) VALUES
+      ('Nasi Kuning', 'Nasi kuning dengan lauk pauk lengkap', 15000, '/images/nasi-kuning.jpg', TRUE, TRUE),
+      ('Rendang', 'Rendang daging sapi yang empuk', 25000, '/images/rendang.jpg', TRUE, TRUE),
+      ('Soto Ayam', 'Soto ayam dengan kuah bening', 18000, '/images/soto.jpg', TRUE, TRUE)
+    `);
+
+    res.json({
+      success: true,
+      message: "Sample data inserted successfully"
+    });
+  } catch (error) {
+    console.error("Init data error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server berjalan di port ${PORT}`);
 });
