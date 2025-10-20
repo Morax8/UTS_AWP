@@ -42,14 +42,35 @@ app.use("/api/reports", reportRoutes);
 // Route opsional untuk testing koneksi database
 app.get("/api/test-db", async (req, res) => {
   try {
+    console.log("Testing database connection...");
+    console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
+    console.log("DB_HOST:", process.env.DB_HOST);
+    console.log("DB_USER:", process.env.DB_USER);
+    console.log("DB_NAME:", process.env.DB_NAME);
+
     const [result] = await db.query(`SELECT NOW()`);
     res.json({
       message: "Koneksi database berhasil!",
       time: result[0]["NOW()"],
+      config: {
+        usingDatabaseUrl: !!process.env.DATABASE_URL,
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        database: process.env.DB_NAME
+      }
     });
   } catch (error) {
     console.error("Error saat query ke database:", error);
-    res.status(500).json({ message: "Gagal terhubung ke database." });
+    res.status(500).json({
+      message: "Gagal terhubung ke database.",
+      error: error.message,
+      config: {
+        usingDatabaseUrl: !!process.env.DATABASE_URL,
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        database: process.env.DB_NAME
+      }
+    });
   }
 });
 
