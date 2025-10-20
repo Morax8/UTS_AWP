@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors({
   origin: [
-    'https://uts-awp-1.onrender.com/',  // URL frontend di Render
+    'https://uts-awp-1.onrender.com',  // URL frontend di Render (tanpa slash di akhir)
     'http://localhost:3000',                   // Untuk development
     'http://localhost:5173'                   // Vite dev server
   ],
@@ -51,6 +51,15 @@ app.get("/api/test-db", async (req, res) => {
     console.error("Error saat query ke database:", error);
     res.status(500).json({ message: "Gagal terhubung ke database." });
   }
+});
+
+// Route untuk test CORS
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "Backend is running!",
+    timestamp: new Date().toISOString(),
+    origin: req.headers.origin
+  });
 });
 
 app.listen(PORT, () => {

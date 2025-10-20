@@ -39,6 +39,7 @@ const getAllMenuItems = async (req, res) => {
 
 const getFeaturedMenuItems = async (req, res) => {
   try {
+    console.log("Fetching featured menu items...");
     const query = `
       SELECT id, name, description, image_url 
       FROM menu_items
@@ -47,9 +48,11 @@ const getFeaturedMenuItems = async (req, res) => {
       LIMIT 3;
     `;
     const [rows] = await db.query(query);
+    console.log("Featured menu items found:", rows.length);
     res.status(200).json({ success: true, data: rows });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error("Error fetching featured menu items:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
