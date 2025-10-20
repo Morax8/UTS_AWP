@@ -132,12 +132,52 @@ app.get("/api/menu/debug", async (req, res) => {
   }
 });
 
+// Route untuk test dashboard stats sederhana
+app.get("/api/dashboard/simple", async (req, res) => {
+  try {
+    console.log("Testing simple dashboard stats...");
+
+    const [menuCount] = await db.query("SELECT COUNT(*) as count FROM menu_items WHERE is_active = TRUE");
+    const [userCount] = await db.query("SELECT COUNT(*) as count FROM users");
+    const [orderCount] = await db.query("SELECT COUNT(*) as count FROM orders");
+
+    res.json({
+      success: true,
+      data: {
+        totalMenuItems: menuCount[0].count,
+        totalUsers: userCount[0].count,
+        totalOrders: orderCount[0].count,
+        totalRevenue: 0
+      }
+    });
+  } catch (error) {
+    console.error("Simple dashboard error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Route untuk insert sample data
 app.get("/api/menu/init", async (req, res) => {
   try {
     console.log("Initializing sample data...");
 
-    // Create tables if not exist
+    // Create all tables
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        phone VARCHAR(20),
+        address TEXT,
+        role ENUM('user', 'admin') DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     await db.query(`
       CREATE TABLE IF NOT EXISTS menu_items (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -152,6 +192,33 @@ app.get("/api/menu/init", async (req, res) => {
       )
     `);
 
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_code VARCHAR(50) UNIQUE NOT NULL,
+        user_id INT,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(20) NOT NULL,
+        customer_address TEXT NOT NULL,
+        total_amount DECIMAL(10,2) NOT NULL,
+        status ENUM('pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_id INT NOT NULL,
+        menu_item_id INT NOT NULL,
+        quantity INT NOT NULL,
+        unit_price DECIMAL(10,2) NOT NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id),
+        FOREIGN KEY (menu_item_id) REFERENCES menu_items(id)
+      )
+    `);
+
     // Insert sample data
     await db.query(`
       INSERT IGNORE INTO menu_items (name, description, price, image_url, is_active, is_featured) VALUES
@@ -160,9 +227,15 @@ app.get("/api/menu/init", async (req, res) => {
       ('Soto Ayam', 'Soto ayam dengan kuah bening', 18000, '/images/soto.jpg', TRUE, TRUE)
     `);
 
+    // Insert admin user (password: admin123)
+    await db.query(`
+      INSERT IGNORE INTO users (name, email, password, role) VALUES
+      ('Admin', 'admin@kateringku.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin')
+    `);
+
     res.json({
       success: true,
-      message: "Sample data inserted successfully"
+      message: "All tables and sample data created successfully"
     });
   } catch (error) {
     console.error("Init data error:", error);
