@@ -83,6 +83,28 @@ app.get("/api/test", (req, res) => {
   });
 });
 
+// Route untuk test semua endpoints
+app.get("/api/routes", (req, res) => {
+  res.json({
+    message: "Available routes:",
+    routes: [
+      "GET /api/test",
+      "GET /api/test-db",
+      "GET /api/menu/debug",
+      "GET /api/menu/simple",
+      "GET /api/menu/init",
+      "GET /api/dashboard/simple",
+      "GET /api/dashboard/debug",
+      "GET /api/dashboard/stats",
+      "GET /api/orders/test",
+      "GET /api/orders/public",
+      "GET /api/orders (requires auth)",
+      "GET /api/menu",
+      "GET /api/menu/featured"
+    ]
+  });
+});
+
 // Route untuk test menu tanpa database
 app.get("/api/menu/simple", (req, res) => {
   res.json({
@@ -183,6 +205,37 @@ app.get("/api/orders/test", async (req, res) => {
     });
   } catch (error) {
     console.error("Orders test error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Route untuk test orders tanpa auth (temporary)
+app.get("/api/orders/public", async (req, res) => {
+  try {
+    console.log("Testing public orders endpoint...");
+
+    const [orders] = await db.query(`
+      SELECT 
+        o.id AS order_id,
+        o.order_code,
+        o.customer_name,
+        o.total_amount,
+        o.status,
+        o.created_at
+      FROM orders o
+      ORDER BY o.created_at DESC
+      LIMIT 10
+    `);
+
+    res.json({
+      success: true,
+      data: orders
+    });
+  } catch (error) {
+    console.error("Public orders error:", error);
     res.status(500).json({
       success: false,
       error: error.message
