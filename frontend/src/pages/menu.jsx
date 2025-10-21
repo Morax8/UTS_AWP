@@ -65,18 +65,35 @@ export default function MenuPage() {
     const fetchMenuData = async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || "";
+        console.log("Fetching menu from:", `${apiUrl}/api/menu`);
         const response = await fetch(`${apiUrl}/api/menu`);
         if (!response.ok) throw new Error("Gagal memuat data menu.");
         const result = await response.json();
+        
+        console.log("API Response:", result);
+        console.log("Menu data:", result.data);
+        console.log("Data length:", result.data?.length);
 
-        setAllMenuItems(result.data);
+        // Handle different response structures
+        let menuData = [];
+        if (result.data && Array.isArray(result.data)) {
+          menuData = result.data;
+        } else if (Array.isArray(result)) {
+          menuData = result;
+        } else {
+          console.warn("Unexpected response structure:", result);
+        }
+
+        setAllMenuItems(menuData);
 
         const uniqueCategories = [
           "All",
-          ...new Set(result.data.map((item) => item.category_name)),
+          ...new Set(menuData.map((item) => item.category_name || "Menu").filter(Boolean)),
         ];
+        console.log("Categories found:", uniqueCategories);
         setCategories(uniqueCategories);
       } catch (err) {
+        console.error("Error fetching menu:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -87,27 +104,44 @@ export default function MenuPage() {
 
   // Filter & sort berdasarkan allMenuItems (data asli)
   const filteredMenuItems = useMemo(() => {
+    console.log("Filtering menu items:", {
+      allMenuItems: allMenuItems.length,
+      selectedCategory,
+      searchTerm,
+      sortBy
+    });
+    
     let filtered = allMenuItems.filter((item) => {
       const matchCategory =
-        selectedCategory === "All" || item.category_name === selectedCategory;
+        selectedCategory === "All" || (item.category_name && item.category_name === selectedCategory);
       const matchSearch = item.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
       return matchCategory && matchSearch;
     });
 
+    console.log("After filtering:", filtered.length, "items");
+
+    let sorted;
     switch (sortBy) {
       case "price-asc":
-        return [...filtered].sort((a, b) => a.price - b.price);
+        sorted = [...filtered].sort((a, b) => a.price - b.price);
+        break;
       case "price-desc":
-        return [...filtered].sort((a, b) => b.price - a.price);
+        sorted = [...filtered].sort((a, b) => b.price - a.price);
+        break;
       case "name-asc":
-        return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+        sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+        break;
       case "name-desc":
-        return [...filtered].sort((a, b) => b.name.localeCompare(a.name));
+        sorted = [...filtered].sort((a, b) => b.name.localeCompare(a.name));
+        break;
       default:
-        return filtered;
+        sorted = filtered;
     }
+    
+    console.log("Final filtered items:", sorted.length);
+    return sorted;
   }, [allMenuItems, selectedCategory, searchTerm, sortBy]);
 
   const handleAddToCart = (item) => {
@@ -129,6 +163,15 @@ export default function MenuPage() {
       </div>
     );
 
+  // Debug info (remove this in production)
+  console.log("Render state:", {
+    allMenuItems: allMenuItems.length,
+    filteredMenuItems: filteredMenuItems.length,
+    categories: categories.length,
+    selectedCategory,
+    searchTerm
+  });
+
   return (
     <div className="bg-gray-50 text-gray-800">
       <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
@@ -139,6 +182,17 @@ export default function MenuPage() {
       </section>
 
       <div className="max-w-7xl mx-auto py-16 px-6 md:px-10">
+        {/* Debug Panel - Remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-yellow-100 p-4 rounded-lg mb-4 text-sm">
+            <strong>Debug Info:</strong> Total Items: {allMenuItems.length} | 
+            Filtered: {filteredMenuItems.length} | 
+            Categories: {categories.length} | 
+            Selected: {selectedCategory} | 
+            Search: "{searchTerm}"
+          </div>
+        )}
+        
         {/* Search & Filter */}
         <motion.div
           className="bg-white p-6 rounded-xl shadow-md mb-12"
@@ -205,7 +259,7 @@ export default function MenuPage() {
                       className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                     />
                     <span className="absolute top-3 left-3 bg-yellow-400 text-xs font-semibold px-3 py-1 rounded-full text-gray-800 shadow">
-                      {item.category_name}
+                      {item.category_name || "Menu"}
                     </span>
                   </div>
                   <div className="p-5 flex flex-col flex-grow">

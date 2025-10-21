@@ -272,7 +272,8 @@ app.get("/api/menu/init", async (req, res) => {
         category_id INT,
         is_active BOOLEAN DEFAULT TRUE,
         is_featured BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (category_id) REFERENCES menu_categories(id)
       )
     `);
 
@@ -350,6 +351,55 @@ app.get("/api/menu/init", async (req, res) => {
     });
   } catch (error) {
     console.error("Init data error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Route untuk test database query
+app.get("/api/menu/test", async (req, res) => {
+  try {
+    console.log("Testing database connection...");
+
+    // Test menu_items table
+    const [menuRows] = await db.query("SELECT * FROM menu_items WHERE is_active = TRUE");
+    console.log("Menu items found:", menuRows.length);
+
+    // Test menu_categories table
+    const [catRows] = await db.query("SELECT * FROM menu_categories");
+    console.log("Categories found:", catRows.length);
+
+    // Test JOIN query
+    const [joinRows] = await db.query(`
+      SELECT 
+        mi.id, 
+        mi.name, 
+        mi.description, 
+        mi.price, 
+        mi.image_url,
+        mi.is_active,
+        mi.category_id,
+        mc.name AS category_name
+      FROM menu_items mi
+      LEFT JOIN menu_categories mc ON mi.category_id = mc.id
+      WHERE mi.is_active = TRUE
+      ORDER BY mi.id
+    `);
+    console.log("JOIN query result:", joinRows.length);
+
+    res.json({
+      success: true,
+      menu_items_count: menuRows.length,
+      categories_count: catRows.length,
+      join_count: joinRows.length,
+      menu_items: menuRows,
+      categories: catRows,
+      join_result: joinRows
+    });
+  } catch (error) {
+    console.error("Database test error:", error);
     res.status(500).json({
       success: false,
       error: error.message

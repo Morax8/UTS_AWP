@@ -12,16 +12,18 @@ const getAllMenuItems = async (req, res) => {
     console.log("Fetching all menu items...");
     const query = `
       SELECT 
-        id, 
-        name, 
-        description, 
-        price, 
-        image_url,
-        is_active,
-        category_id
-      FROM menu_items
-      WHERE is_active = TRUE
-      ORDER BY id;
+        mi.id, 
+        mi.name, 
+        mi.description, 
+        mi.price, 
+        mi.image_url,
+        mi.is_active,
+        mi.category_id,
+        mc.name AS category_name
+      FROM menu_items mi
+      LEFT JOIN menu_categories mc ON mi.category_id = mc.id
+      WHERE mi.is_active = TRUE
+      ORDER BY mi.id;
     `;
 
     const [rows] = await db.query(query);
