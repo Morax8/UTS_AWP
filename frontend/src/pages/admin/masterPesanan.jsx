@@ -12,8 +12,9 @@ export default function MasterPesanan() {
 
   // === Fetch data dari backend ===
   useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
     axios
-      .get("/api/orders") // ganti sesuai route lu
+      .get(`${apiUrl}/api/orders`) // ganti sesuai route lu
       .then((res) => {
         if (res.data.success) {
           setPesananData(res.data.data);
@@ -49,7 +50,9 @@ export default function MasterPesanan() {
   const handleUpdateStatus = async (id, newStatus) => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "";
-      await axios.put(`${apiUrl}/api/orders/${id}/status`, { status: newStatus });
+      await axios.put(`${apiUrl}/api/orders/${id}/status`, {
+        status: newStatus,
+      });
       setPesananData((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
       );
