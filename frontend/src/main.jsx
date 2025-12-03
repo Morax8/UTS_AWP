@@ -7,7 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/authContext";
 import { CartProvider } from "./context/cartContext.jsx";
 
-const BACKEND_URL = "https://uts-awp.onrender.com/tes-db";
+const BACKEND_URL = "https://uts-awp.onrender.com/test-db";
 
 const wakeUpServer = async () => {
   try {

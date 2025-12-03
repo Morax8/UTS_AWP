@@ -69,7 +69,7 @@ export default function MenuPage() {
         const response = await fetch(`${apiUrl}/api/menu`);
         if (!response.ok) throw new Error("Gagal memuat data menu.");
         const result = await response.json();
-        
+
         console.log("API Response:", result);
         console.log("Menu data:", result.data);
         console.log("Data length:", result.data?.length);
@@ -88,7 +88,9 @@ export default function MenuPage() {
 
         const uniqueCategories = [
           "All",
-          ...new Set(menuData.map((item) => item.category_name || "Menu").filter(Boolean)),
+          ...new Set(
+            menuData.map((item) => item.category_name || "Menu").filter(Boolean)
+          ),
         ];
         console.log("Categories found:", uniqueCategories);
         setCategories(uniqueCategories);
@@ -108,12 +110,13 @@ export default function MenuPage() {
       allMenuItems: allMenuItems.length,
       selectedCategory,
       searchTerm,
-      sortBy
+      sortBy,
     });
-    
+
     let filtered = allMenuItems.filter((item) => {
       const matchCategory =
-        selectedCategory === "All" || (item.category_name && item.category_name === selectedCategory);
+        selectedCategory === "All" ||
+        (item.category_name && item.category_name === selectedCategory);
       const matchSearch = item.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
@@ -139,7 +142,7 @@ export default function MenuPage() {
       default:
         sorted = filtered;
     }
-    
+
     console.log("Final filtered items:", sorted.length);
     return sorted;
   }, [allMenuItems, selectedCategory, searchTerm, sortBy]);
@@ -169,7 +172,7 @@ export default function MenuPage() {
     filteredMenuItems: filteredMenuItems.length,
     categories: categories.length,
     selectedCategory,
-    searchTerm
+    searchTerm,
   });
 
   return (
@@ -183,16 +186,15 @@ export default function MenuPage() {
 
       <div className="max-w-7xl mx-auto py-16 px-6 md:px-10">
         {/* Debug Panel - Remove in production */}
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === "development" && (
           <div className="bg-yellow-100 p-4 rounded-lg mb-4 text-sm">
-            <strong>Debug Info:</strong> Total Items: {allMenuItems.length} | 
-            Filtered: {filteredMenuItems.length} | 
-            Categories: {categories.length} | 
-            Selected: {selectedCategory} | 
-            Search: "{searchTerm}"
+            <strong>Debug Info:</strong> Total Items: {allMenuItems.length} |
+            Filtered: {filteredMenuItems.length} | Categories:{" "}
+            {categories.length} | Selected: {selectedCategory} | Search: "
+            {searchTerm}"
           </div>
         )}
-        
+
         {/* Search & Filter */}
         <motion.div
           className="bg-white p-6 rounded-xl shadow-md mb-12"
