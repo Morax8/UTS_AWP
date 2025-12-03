@@ -11,7 +11,7 @@ const {
 } = require("../controllers/menuController");
 const { protect } = require("../middleware/authMiddleware");
 
-// Setup multer (pakai memory storage biar bisa dikirim ke Bytescale)
+// Setup multer
 const upload = multer();
 
 // Rute Publik

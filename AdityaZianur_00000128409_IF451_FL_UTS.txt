@@ -8,6 +8,7 @@
 4. GitHub Link: https://github.com/Morax8/UTS_AWP
 5. Tech Stack: 	Frontend: React
 		Backend: Express
+		Hosting: Render
 		DB: Aiven DB(MySQL)
-		Storage: ByteScale(storing images)
-*notes: kalua abis di refresh jadi 404, Kembali ke home dari link no 1
+		Storage: cloudinary (storing images)
+*notes: kalau abis di refresh jadi 404, Kembali ke home dari link no 1

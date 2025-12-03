@@ -1,8 +1,11 @@
 const db = require("../config/db");
 require("dotenv").config();
-const { UploadManager } = require("@bytescale/sdk");
-const uploadManager = new UploadManager({
-  apiKey: process.env.BYTESCALE_API_KEY,
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 // @desc    Get all active menu items with their categories
 // @route   GET /api/menu
@@ -36,7 +39,9 @@ const getAllMenuItems = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching menu items:", error);
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -55,7 +60,9 @@ const getFeaturedMenuItems = async (req, res) => {
     res.status(200).json({ success: true, data: rows });
   } catch (error) {
     console.error("Error fetching featured menu items:", error);
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -74,14 +81,21 @@ const createMenuItem = async (req, res) => {
   }
 
   try {
-    // --- PERBAIKAN 3: Gunakan method 'upload' dari UploadManager ---
-    const { fileUrl } = await uploadManager.upload({
-      data: req.file.buffer,
-      mime: req.file.mimetype,
-      originalFileName: req.file.originalname,
+    // Proses Upload ke Cloudinary via Buffer
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "kateringku-menu",
+          resource_type: "auto", // Biar aman kalau upload PDF/Video
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(file.buffer); // Ini ambil dari MemoryStorage
     });
-
-    const imageUrl = fileUrl; // URL gambar dari Bytescale
+    const imageUrl = uploadResult.secure_url;
 
     // Simpan URL ke database
     const query = `
@@ -126,14 +140,19 @@ const updateMenuItem = async (req, res) => {
   try {
     let imageUrl;
 
-    // kalau ada file baru, upload ke Bytescale
+    // kalau ada file baru, upload ke Cloudinary
     if (file) {
-      const { fileUrl } = await uploadManager.upload({
-        data: file.buffer,
-        mime: file.mimetype,
-        originalFileName: file.originalname,
+      const uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "kateringku-menu" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(file.buffer);
       });
-      imageUrl = fileUrl;
+      imageUrl = uploadResult.secure_url;
     }
 
     // kalau gak ada file baru, jangan ubah image_url di DB
@@ -218,3 +237,4 @@ module.exports = {
   deleteMenuItem,
   getAllMenuItemsNoFilter,
 };
+

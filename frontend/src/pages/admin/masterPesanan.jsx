@@ -13,14 +13,17 @@ export default function MasterPesanan() {
   // === Fetch data dari backend ===
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || "";
-    axios
-      .get(`${apiUrl}/api/orders`) // ganti sesuai route lu
-      .then((res) => {
-        if (res.data.success) {
-          setPesananData(res.data.data);
-        }
-      })
-      .catch((err) => console.error("Gagal fetch pesanan:", err));
+    const fetchData = async () => {
+      await axios
+        .get(`${apiUrl}/api/orders`) // ganti sesuai route lu
+        .then((res) => {
+          if (res.data.success) {
+            setPesananData(res.data.data);
+          }
+        })
+        .catch((err) => console.error("Gagal fetch pesanan:", err));
+    };
+    fetchData();
   }, []);
 
   // Filter berdasarkan pencarian dan status

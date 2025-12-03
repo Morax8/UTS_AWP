@@ -1,2 +1,10 @@
-# Redirect all routes to index.html for React Router
+# Don't redirect API calls
+/api/*  :splat  200
+
+# Don't redirect actual files/images
+/images/*  :splat  200
+/*.js  :splat  200
+/*.css  :splat  200
+
+# Redirect all other routes to index.html for React Router
 /*    /index.html   200
