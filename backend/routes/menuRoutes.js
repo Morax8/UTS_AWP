@@ -1,6 +1,6 @@
 const express = require("express");
-const multer = require("multer");
 const router = express.Router();
+const upload = require("../middleware/uploadMiddleware");
 const {
   getAllMenuItems,
   getFeaturedMenuItems,
@@ -10,9 +10,6 @@ const {
   getAllMenuItemsNoFilter,
 } = require("../controllers/menuController");
 const { protect } = require("../middleware/authMiddleware");
-
-// Setup multer
-const upload = multer();
 
 // Rute Publik
 router.get("/", getAllMenuItems);
