@@ -58,12 +58,13 @@ const getDashboardStats = async (req, res) => {
       console.log("Top menus query failed:", err.message);
     }
 
-    // 3. Data untuk Grafik Pemasukan Harian - dengan error handling
+    // 3. Data untuk Grafik Pemasukan Harian (3 bulan terakhir) - dengan error handling
     try {
+      // Ambil data per-hari selama 3 bulan terakhir
       const [dailySalesResult] = await db.query(
         `SELECT DATE_FORMAT(created_at, '%d %b') as day, SUM(total_amount) as sales 
          FROM orders 
-         WHERE created_at >= CURDATE() - INTERVAL 7 DAY
+         WHERE created_at >= CURDATE() - INTERVAL 3 MONTH
          GROUP BY DATE(created_at), DATE_FORMAT(created_at, '%d %b')
          ORDER BY DATE(created_at) ASC`
       );
@@ -89,6 +90,26 @@ const getDashboardStats = async (req, res) => {
       console.log("Category sales query failed:", err.message);
     }
 
+    // Normalisasi tipe data: pastikan angka dikirim sebagai Number ke frontend
+    ordersThisMonth = Number(ordersThisMonth) || 0;
+    revenueThisMonth = Number(revenueThisMonth) || 0;
+    totalCustomers = Number(totalCustomers) || 0;
+
+    topMenus = (topMenus || []).map((m) => ({
+      ...m,
+      total_sold: Number(m.total_sold) || 0,
+    }));
+
+    dailySales = (dailySales || []).map((d) => ({
+      ...d,
+      sales: Number(d.sales) || 0,
+    }));
+
+    categorySales = (categorySales || []).map((c) => ({
+      ...c,
+      category_total: Number(c.category_total) || 0,
+    }));
+
     const stats = {
       totalOrdersThisMonth: ordersThisMonth,
       totalRevenueThisMonth: revenueThisMonth,
@@ -102,7 +123,9 @@ const getDashboardStats = async (req, res) => {
     res.status(200).json({ success: true, data: stats });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
-    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
