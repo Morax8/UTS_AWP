@@ -40,13 +40,15 @@ export default function MasterPesanan() {
   }, [navigate]);
 
   // Filter berdasarkan pencarian dan status
-  const filteredData = pesananData.filter((p) => {
-    const matchSearch =
-      p.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-      p.order_code.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus ? p.status === filterStatus : true;
-    return matchSearch && matchStatus;
-  });
+  const filteredData = pesananData
+    .filter((p) => {
+      const matchSearch =
+        p.customer_name.toLowerCase().includes(search.toLowerCase()) ||
+        p.order_code.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = filterStatus ? p.status === filterStatus : true;
+      return matchSearch && matchStatus;
+    })
+    .sort((a, b) => b.id - a.id);
 
   // Fungsi untuk mendapatkan style status
   const getStatusStyle = (status) => {
