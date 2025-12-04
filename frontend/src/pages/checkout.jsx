@@ -79,21 +79,32 @@ export default function CheckoutPage() {
         try {
           const token = localStorage.getItem("authToken");
           const apiUrl = import.meta.env.VITE_API_URL || "";
+          console.log("Fetching user profile with token:", token ? "✓" : "✗");
+
           const response = await axios.get(`${apiUrl}/api/users/profile`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
+          console.log("User profile response:", response.data);
+
           if (response.data.success && response.data.data) {
             const userData = response.data.data;
+            console.log("Setting form data with:", userData);
             setFormData({
               customerName: userData.name || "",
               customerPhone: userData.phone || "",
               customerAddress: userData.address || "",
             });
+          } else {
+            throw new Error("Response data structure invalid");
           }
         } catch (err) {
-          console.error("Gagal fetch profil user:", err);
+          console.error(
+            "Gagal fetch profil user:",
+            err.response?.data || err.message
+          );
           // Fallback ke currentUser jika API gagal
+          console.log("Fallback to currentUser:", currentUser);
           setFormData({
             customerName: currentUser.name || "",
             customerPhone: currentUser.phone || "",
