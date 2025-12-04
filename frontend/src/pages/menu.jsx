@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomDropdown from "../components/customDropdown";
 import { useCart } from "../context/cartContext";
+import { useAuth } from "../context/authContext";
 import { motion } from "framer-motion";
 
 const StarIcon = ({ className }) => (
@@ -50,6 +52,8 @@ const sortOptions = [
 ];
 
 export default function MenuPage() {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { addToCart } = useCart();
   const [addedItemId, setAddedItemId] = useState(null);
   const [allMenuItems, setAllMenuItems] = useState([]); // data asli
@@ -148,6 +152,10 @@ export default function MenuPage() {
   }, [allMenuItems, selectedCategory, searchTerm, sortBy]);
 
   const handleAddToCart = (item) => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
     addToCart(item);
     setAddedItemId(item.id);
     setTimeout(() => setAddedItemId(null), 1500);

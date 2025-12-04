@@ -74,13 +74,36 @@ export default function CheckoutPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (currentUser) {
-      setFormData({
-        customerName: currentUser.name || "",
-        customerPhone: currentUser.phone || "",
-        customerAddress: currentUser.address || "",
-      });
-    }
+    const fetchUserProfile = async () => {
+      if (currentUser) {
+        try {
+          const token = localStorage.getItem("authToken");
+          const apiUrl = import.meta.env.VITE_API_URL || "";
+          const response = await axios.get(`${apiUrl}/api/users/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (response.data.success && response.data.data) {
+            const userData = response.data.data;
+            setFormData({
+              customerName: userData.name || "",
+              customerPhone: userData.phone || "",
+              customerAddress: userData.address || "",
+            });
+          }
+        } catch (err) {
+          console.error("Gagal fetch profil user:", err);
+          // Fallback ke currentUser jika API gagal
+          setFormData({
+            customerName: currentUser.name || "",
+            customerPhone: currentUser.phone || "",
+            customerAddress: currentUser.address || "",
+          });
+        }
+      }
+    };
+
+    fetchUserProfile();
   }, [currentUser]);
 
   useEffect(() => {
