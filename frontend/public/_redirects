@@ -1,6 +1,3 @@
-# Don't redirect API calls
-/api/*  :splat  200
-
 # Don't redirect actual files/images
 /images/*  :splat  200
 /*.js  :splat  200

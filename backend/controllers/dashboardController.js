@@ -73,7 +73,7 @@ const getDashboardStats = async (req, res) => {
       console.log("Daily sales query failed:", err.message);
     }
 
-    // 4. Data untuk Proporsi Penjualan Kategori - dengan error handling
+    // 4. Data untuk Proporsi Penjualan Kategori (3 bulan terakhir) - dengan error handling
     try {
       const [categorySalesResult] = await db.query(
         `SELECT mc.name, SUM(oi.quantity * oi.unit_price) as category_total
@@ -81,7 +81,7 @@ const getDashboardStats = async (req, res) => {
          JOIN menu_items mi ON oi.menu_item_id = mi.id
          JOIN menu_categories mc ON mi.category_id = mc.id
          JOIN orders o ON oi.order_id = o.id
-         WHERE MONTH(o.created_at) = MONTH(CURDATE()) AND YEAR(o.created_at) = YEAR(CURDATE())
+         WHERE o.created_at >= CURDATE() - INTERVAL 3 MONTH
          GROUP BY mc.id, mc.name
          ORDER BY category_total DESC`
       );
