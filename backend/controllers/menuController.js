@@ -81,7 +81,14 @@ const createMenuItem = async (req, res) => {
   }
 
   try {
+    console.log("Creating new menu item:", {
+      name,
+      category_id,
+      has_file: !!file,
+    });
+
     // Proses Upload ke Cloudinary via Buffer
+    console.log("Uploading image to Cloudinary...");
     const uploadResult = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -89,13 +96,22 @@ const createMenuItem = async (req, res) => {
           resource_type: "auto", // Biar aman kalau upload PDF/Video
         },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            console.error("Cloudinary upload error:", error);
+            reject(error);
+          } else {
+            console.log("Image uploaded successfully:", result.secure_url);
+            resolve(result);
+          }
         }
       );
       uploadStream.end(file.buffer); // Ini ambil dari MemoryStorage
     });
     const imageUrl = uploadResult.secure_url;
+
+    // Convert is_active to integer (0 or 1)
+    const isActive =
+      is_active === true || is_active === 1 || is_active === "1" ? 1 : 0;
 
     // Simpan URL ke database
     const query = `
@@ -107,10 +123,11 @@ const createMenuItem = async (req, res) => {
       price,
       category_id,
       description,
-      is_active,
+      isActive,
       imageUrl,
     ]);
 
+    console.log("Menu item created successfully");
     res
       .status(201)
       .json({ success: true, message: "Menu baru berhasil ditambahkan." });
@@ -118,7 +135,11 @@ const createMenuItem = async (req, res) => {
     console.error("Error creating menu:", error);
     res
       .status(500)
-      .json({ success: false, message: "Gagal menambahkan menu." });
+      .json({
+        success: false,
+        message: "Gagal menambahkan menu.",
+        error: error.message,
+      });
   }
 };
 
@@ -138,22 +159,34 @@ const updateMenuItem = async (req, res) => {
   }
 
   try {
+    console.log("Updating menu item:", { id, name, has_file: !!file });
+
     let imageUrl;
 
     // kalau ada file baru, upload ke Cloudinary
     if (file) {
+      console.log("Uploading new image to Cloudinary...");
       const uploadResult = await new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           { folder: "kateringku-menu" },
           (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
+            if (error) {
+              console.error("Cloudinary upload error:", error);
+              reject(error);
+            } else {
+              console.log("Image uploaded successfully:", result.secure_url);
+              resolve(result);
+            }
           }
         );
         uploadStream.end(file.buffer);
       });
       imageUrl = uploadResult.secure_url;
     }
+
+    // Convert is_active to integer (0 or 1)
+    const isActive =
+      is_active === true || is_active === 1 || is_active === "1" ? 1 : 0;
 
     // kalau gak ada file baru, jangan ubah image_url di DB
     const query = file
@@ -169,11 +202,17 @@ const updateMenuItem = async (req, res) => {
         `;
 
     const params = file
-      ? [name, price, category_id, description, is_active, imageUrl, id]
-      : [name, price, category_id, description, is_active, id];
+      ? [name, price, category_id, description, isActive, imageUrl, id]
+      : [name, price, category_id, description, isActive, id];
+
+    console.log("Update query params:", {
+      query_type: file ? "with_image" : "no_image",
+      params,
+    });
 
     await db.query(query, params);
 
+    console.log("Menu updated successfully");
     res
       .status(200)
       .json({ success: true, message: "Menu berhasil diperbarui." });
@@ -181,7 +220,11 @@ const updateMenuItem = async (req, res) => {
     console.error("Error updating menu:", error);
     res
       .status(500)
-      .json({ success: false, message: "Gagal memperbarui menu." });
+      .json({
+        success: false,
+        message: "Gagal memperbarui menu.",
+        error: error.message,
+      });
   }
 };
 
