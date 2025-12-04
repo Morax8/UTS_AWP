@@ -14,17 +14,30 @@ export default function MasterPesanan() {
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || "";
     const fetchData = async () => {
-      await axios
-        .get(`${apiUrl}/api/orders`) // ganti sesuai route lu
-        .then((res) => {
-          if (res.data.success) {
-            setPesananData(res.data.data);
-          }
-        })
-        .catch((err) => console.error("Gagal fetch pesanan:", err));
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          console.error("Token tidak ditemukan, redirect ke login");
+          navigate("/login");
+          return;
+        }
+
+        const res = await axios.get(`${apiUrl}/api/orders`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.data.success) {
+          setPesananData(res.data.data);
+        }
+      } catch (err) {
+        console.error("Gagal fetch pesanan:", err);
+        if (err.response?.status === 401) {
+          navigate("/login");
+        }
+      }
     };
     fetchData();
-  }, []);
+  }, [navigate]);
 
   // Filter berdasarkan pencarian dan status
   const filteredData = pesananData.filter((p) => {
