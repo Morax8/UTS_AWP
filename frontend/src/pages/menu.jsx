@@ -53,7 +53,7 @@ const sortOptions = [
 
 export default function MenuPage() {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const { addToCart } = useCart();
   const [addedItemId, setAddedItemId] = useState(null);
   const [allMenuItems, setAllMenuItems] = useState([]); // data asli
