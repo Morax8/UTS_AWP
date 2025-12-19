@@ -17,16 +17,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({
-  origin: [
-    'https://uts-awp-1.onrender.com',  // URL frontend di Render (tanpa slash di akhir)
-    'http://localhost:3000',                   // Untuk development
-    'http://localhost:5173'                   // Vite dev server
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: [
+      "https://kateringku.onrender.com", // URL frontend di Render (tanpa slash di akhir)
+      "http://localhost:3000", // Untuk development
+      "http://localhost:5173", // Vite dev server
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // Gunakan Routes
@@ -56,8 +58,8 @@ app.get("/api/test-db", async (req, res) => {
         usingDatabaseUrl: !!process.env.DATABASE_URL,
         host: process.env.DB_HOST,
         user: process.env.DB_USER,
-        database: process.env.DB_NAME
-      }
+        database: process.env.DB_NAME,
+      },
     });
   } catch (error) {
     console.error("Error saat query ke database:", error);
@@ -68,8 +70,8 @@ app.get("/api/test-db", async (req, res) => {
         usingDatabaseUrl: !!process.env.DATABASE_URL,
         host: process.env.DB_HOST,
         user: process.env.DB_USER,
-        database: process.env.DB_NAME
-      }
+        database: process.env.DB_NAME,
+      },
     });
   }
 });
@@ -79,7 +81,7 @@ app.get("/api/test", (req, res) => {
   res.json({
     message: "Backend is running!",
     timestamp: new Date().toISOString(),
-    origin: req.headers.origin
+    origin: req.headers.origin,
   });
 });
 
@@ -93,9 +95,9 @@ app.get("/api/menu/simple", (req, res) => {
         name: "Nasi Kuning",
         description: "Nasi kuning dengan lauk pauk lengkap",
         image_url: "/images/nasi-kuning.jpg",
-        price: 15000
-      }
-    ]
+        price: 15000,
+      },
+    ],
   });
 });
 
@@ -113,21 +115,23 @@ app.get("/api/menu/debug", async (req, res) => {
     console.log("Tables found:", tables);
 
     // Test menu_items table
-    const [menuItems] = await db.query("SELECT COUNT(*) as count FROM menu_items");
+    const [menuItems] = await db.query(
+      "SELECT COUNT(*) as count FROM menu_items"
+    );
     console.log("Menu items count:", menuItems);
 
     res.json({
       success: true,
       simpleQuery: result,
       tables: tables,
-      menuItemsCount: menuItems[0].count
+      menuItemsCount: menuItems[0].count,
     });
   } catch (error) {
     console.error("Database debug error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
   }
 });
@@ -137,7 +141,9 @@ app.get("/api/dashboard/simple", async (req, res) => {
   try {
     console.log("Testing simple dashboard stats...");
 
-    const [menuCount] = await db.query("SELECT COUNT(*) as count FROM menu_items WHERE is_active = TRUE");
+    const [menuCount] = await db.query(
+      "SELECT COUNT(*) as count FROM menu_items WHERE is_active = TRUE"
+    );
     const [userCount] = await db.query("SELECT COUNT(*) as count FROM users");
     const [orderCount] = await db.query("SELECT COUNT(*) as count FROM orders");
 
@@ -147,14 +153,14 @@ app.get("/api/dashboard/simple", async (req, res) => {
         totalMenuItems: menuCount[0].count,
         totalUsers: userCount[0].count,
         totalOrders: orderCount[0].count,
-        totalRevenue: 0
-      }
+        totalRevenue: 0,
+      },
     });
   } catch (error) {
     console.error("Simple dashboard error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -179,13 +185,13 @@ app.get("/api/orders/test", async (req, res) => {
 
     res.json({
       success: true,
-      data: orders
+      data: orders,
     });
   } catch (error) {
     console.error("Orders test error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -231,14 +237,14 @@ app.get("/api/dashboard/debug", async (req, res) => {
       data: {
         topMenus: topMenus,
         dailySales: dailySales,
-        categorySales: categorySales
-      }
+        categorySales: categorySales,
+      },
     });
   } catch (error) {
     console.error("Debug chart error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -347,13 +353,13 @@ app.get("/api/menu/init", async (req, res) => {
 
     res.json({
       success: true,
-      message: "All tables and sample data created successfully"
+      message: "All tables and sample data created successfully",
     });
   } catch (error) {
     console.error("Init data error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
@@ -364,7 +370,9 @@ app.get("/api/menu/test", async (req, res) => {
     console.log("Testing database connection...");
 
     // Test menu_items table
-    const [menuRows] = await db.query("SELECT * FROM menu_items WHERE is_active = TRUE");
+    const [menuRows] = await db.query(
+      "SELECT * FROM menu_items WHERE is_active = TRUE"
+    );
     console.log("Menu items found:", menuRows.length);
 
     // Test menu_categories table
@@ -396,13 +404,13 @@ app.get("/api/menu/test", async (req, res) => {
       join_count: joinRows.length,
       menu_items: menuRows,
       categories: catRows,
-      join_result: joinRows
+      join_result: joinRows,
     });
   } catch (error) {
     console.error("Database test error:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
