@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 // 1. Import motion
 import { motion } from "framer-motion";
-import zian from "../assets/zian.jpg";
+import zian from "/images/zian.jpg";
 
 // --- Komponen Ikon SVG (Tidak berubah) ---
 const CheckIcon = () => (
