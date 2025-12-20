@@ -33,10 +33,10 @@ const FaFileExport = () => (
     <path d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
   </svg>
 );
-const FaFilter = ({ className }) => (
+const FaFilter = ({ className = "" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    className={className}
+    className={`h-5 w-5 ${className}`.trim()}
     viewBox="0 0 20 20"
     fill="currentColor"
   >
