@@ -62,7 +62,7 @@ const AddressIcon = () => (
 
 export default function CheckoutPage() {
   const { cartItems, totalPrice, clearCart } = useCart();
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -75,7 +75,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (currentUser) {
+      if (user) {
         try {
           const token = localStorage.getItem("authToken");
           const apiUrl = import.meta.env.VITE_API_URL || "";
@@ -104,18 +104,18 @@ export default function CheckoutPage() {
             err.response?.data || err.message
           );
           // Fallback ke currentUser jika API gagal
-          console.log("Fallback to currentUser:", currentUser);
+          console.log("Fallback to auth user:", user);
           setFormData({
-            customerName: currentUser.name || "",
-            customerPhone: currentUser.phone || "",
-            customerAddress: currentUser.address || "",
+            customerName: user.name || "",
+            customerPhone: user.phone || "",
+            customerAddress: user.address || "",
           });
         }
       }
     };
 
     fetchUserProfile();
-  }, [currentUser]);
+  }, [user]);
 
   useEffect(() => {
     if (cartItems.length === 0 && !loading) {
@@ -142,7 +142,7 @@ export default function CheckoutPage() {
         quantity: item.quantity,
         unit_price: item.price,
       })),
-      user_id: currentUser ? currentUser.id : null,
+      user_id: user ? user.id : null,
     };
 
     try {
