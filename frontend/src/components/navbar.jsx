@@ -61,7 +61,7 @@ const navLinks = [
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { cart } = useCart();
+  const { cartItems } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ export default function Navbar() {
 
   // --- PERBAIKAN DI SINI ---
   // Memberikan fallback array kosong `[]` untuk mencegah error jika cart masih undefined
-  const cartItemCount = (cart || []).reduce(
+  const cartItemCount = (cartItems || []).reduce(
     (sum, item) => sum + item.quantity,
     0
   );
@@ -129,6 +129,9 @@ export default function Navbar() {
               </NavLink>
               <NavLink to="/about" className={getNavLinkClass}>
                 Tentang
+              </NavLink>
+              <NavLink to="/faq" className={getNavLinkClass}>
+                FAQ
               </NavLink>
               <NavLink to="/contact-us" className={getNavLinkClass}>
                 Kontak

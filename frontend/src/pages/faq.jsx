@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaChevronDown } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 // --- Data FAQ (tetap hardcoded, ini sudah efisien) ---
 const faqList = [
@@ -71,15 +72,25 @@ export default function FAQPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 flex flex-col">
-      <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
+      <motion.section
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md"
+      >
         <h1 className="text-5xl font-bold mb-3">Frequently Asked Questions</h1>
         <p className="text-lg text-gray-700">
           Temukan jawaban atas pertanyaan yang sering diajukan pelanggan kami.
         </p>
-      </section>
+      </motion.section>
 
       <div className="max-w-3xl w-full mx-auto my-16 px-6 flex-grow">
-        <div className="bg-white shadow-xl rounded-2xl p-8">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+          className="bg-white shadow-xl rounded-2xl p-8"
+        >
           {faqList.map((faq, index) => (
             <FaqItem
               key={index}
@@ -88,10 +99,15 @@ export default function FAQPage() {
               onClick={() => toggleFAQ(index)}
             />
           ))}
-        </div>
+        </motion.div>
 
         {/* --- Bagian CTA (Call to Action) --- */}
-        <div className="mt-12 text-center bg-yellow-50 border-2 border-dashed border-yellow-300 p-8 rounded-xl">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.35 }}
+          className="mt-12 text-center bg-yellow-50 border-2 border-dashed border-yellow-300 p-8 rounded-xl"
+        >
           <h3 className="text-2xl font-bold text-gray-800">
             Tidak Menemukan Jawaban?
           </h3>
@@ -104,7 +120,7 @@ export default function FAQPage() {
               Hubungi Kami
             </button>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -71,6 +71,7 @@ export default function CheckoutPage() {
     customerAddress: "",
   });
   const [loading, setLoading] = useState(false);
+  const [orderCompleted, setOrderCompleted] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -118,10 +119,10 @@ export default function CheckoutPage() {
   }, [user]);
 
   useEffect(() => {
-    if (cartItems.length === 0 && !loading) {
+    if (cartItems.length === 0 && !loading && !orderCompleted) {
       navigate("/menu");
     }
-  }, [cartItems, loading, navigate]);
+  }, [cartItems, loading, orderCompleted, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -149,6 +150,7 @@ export default function CheckoutPage() {
       const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await axios.post(`${apiUrl}/api/orders`, orderPayload);
       const orderCode = response.data.order_code;
+      setOrderCompleted(true);
       clearCart();
       navigate(`/track-order?code=${orderCode}`, {
         state: { successMessage: `Pesanan #${orderCode} berhasil dibuat!` },
