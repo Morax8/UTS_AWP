@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react"; // 1. Import useMemo
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import {
   FaHome,
@@ -10,6 +10,7 @@ import {
   FaPlus,
   FaEdit,
   FaTrashAlt,
+  FaBars,
 } from "react-icons/fa";
 import Sidebar from "../../components/sidebar";
 import axios from "axios";
@@ -25,6 +26,7 @@ const formatRupiah = (number) =>
 // --- Komponen Utama Halaman ---
 export default function MasterMenu() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
 
   const [menuItems, setMenuItems] = useState([]);
@@ -35,6 +37,7 @@ export default function MasterMenu() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState(""); // Akan menyimpan ID kategori // --- FUNGSI FETCH (Tidak berubah) ---
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -71,6 +74,13 @@ export default function MasterMenu() {
   useEffect(() => {
     fetchData();
   }, []); // --- 4. LOGIKA FILTER MENGGUNAKAN useMemo --- // visibleItems akan dihitung ulang HANYA jika menuItems, filterCategory, atau searchTerm berubah
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   const visibleItems = useMemo(() => {
     return menuItems
@@ -122,195 +132,235 @@ export default function MasterMenu() {
   );
 
   return (
-    <div className="min-h-screen flex">
-      <Sidebar />
-      <main className="flex-1 p-8 bg-gray-100 overflow-y-auto">
-        <header className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">Master Menu</h2>
-
-          <button
-            onClick={() => navigate("/admin/master-menu/add")}
-            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transform hover:scale-105 transition-all"
-          >
-            <FaPlus /> Tambah Menu
-          </button>
-        </header>
-        {/* --- 3. UI BARU UNTUK FILTER & SEARCH --- */}
-        <div className="mb-6 p-4 bg-white rounded-xl shadow-lg flex flex-col sm:flex-row gap-4">
-          <input
-            type="text"
-            placeholder="Cari nama menu..."
-            className="flex-grow p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-
-          <select
-            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-1/4"
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-          >
-            <option value="">Semua Kategori</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+    <div className="min-h-screen bg-gray-100">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <div className="hidden lg:flex">
+          <Sidebar />
         </div>
+        <div
+          className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-yellow-500 shadow-2xl transition-transform duration-300 lg:hidden ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <Sidebar />
+        </div>
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+            onClick={closeSidebar}
+          />
+        )}
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b-2 border-gray-200">
-                <tr>
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    ID
-                  </th>
+        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+          <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-yellow-500 text-white shadow-lg transition hover:bg-yellow-600 lg:hidden"
+                onClick={openSidebar}
+                aria-label="Buka menu admin"
+              >
+                <FaBars />
+              </button>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                Master Menu
+              </h2>
+            </div>
 
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Nama Menu
-                  </th>
+            <button
+              onClick={() => navigate("/admin/master-menu/add")}
+              className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
+            >
+              <FaPlus /> Tambah Menu
+            </button>
+          </header>
+          {/* --- 3. UI BARU UNTUK FILTER & SEARCH --- */}
+          <div className="mb-6 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-lg sm:flex-row">
+            <input
+              type="text"
+              placeholder="Cari nama menu..."
+              className="flex-grow p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
 
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Kategori
-                  </th>
+            <select
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-48"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            >
+              <option value="">Semua Kategori</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Harga
-                  </th>
-
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Status
-                  </th>
-
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {loading ? (
+          <div className="rounded-xl bg-white p-6 shadow-lg">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b-2 border-gray-200">
                   <tr>
-                    <td colSpan="6" className="text-center py-10 text-gray-500">
-                      Memuat data menu...
-                    </td>
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      ID
+                    </th>
+
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Nama Menu
+                    </th>
+
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Kategori
+                    </th>
+
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Harga
+                    </th>
+
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Status
+                    </th>
+
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Aksi
+                    </th>
                   </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan="6" className="text-center py-10 text-red-500">
-                      {error}
-                    </td>
-                  </tr>
-                ) : /* --- 5. RENDER DARI visibleItems --- */
-                currentItems.length > 0 ? (
-                  currentItems.map((menu) => (
-                    <tr key={menu.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 text-gray-700">{menu.id}</td>
+                </thead>
 
-                      <td className="p-4 font-semibold text-gray-900">
-                        {menu.name}
-                      </td>
-
-                      <td className="p-4 text-gray-600">
-                        {menu.category_name}
-                      </td>
-
-                      <td className="p-4 text-green-600 font-medium">
-                        {formatRupiah(menu.price)}
-                      </td>
-
-                      <td className="p-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            menu.is_active
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {menu.is_active ? "Aktif" : "Tidak Aktif"}
-                        </span>
-                      </td>
-
-                      <td className="p-4 space-x-3">
-                        <button
-                          title="Edit"
-                          onClick={() =>
-                            navigate(`/admin/master-menu/edit/${menu.id}`)
-                          }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
-                        >
-                          <FaEdit className="text-sm" />
-                          <span className="font-medium text-sm">Edit</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDelete(menu.id)}
-                          title="Hapus"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
-                        >
-                          <FaTrashAlt className="text-sm" />
-                          <span className="font-medium text-sm">Hapus</span>
-                        </button>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="text-center py-10 text-gray-500"
+                      >
+                        Memuat data menu...
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  /* --- 6. PESAN JIKA HASIL FILTER KOSONG --- */
-                  <tr>
-                    <td colSpan="6" className="text-center py-10 text-gray-500">
-                      Tidak ada menu yang sesuai dengan pencarian/filter Anda.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            {/* --- Pagination Controls --- */}
-            <div className="flex justify-center items-center mt-6 space-x-2">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className={`px-3 py-1 rounded-lg ${
-                  currentPage === 1
-                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-yellow-500 text-white hover:bg-yellow-600"
-                }`}
-              >
-                Prev
-              </button>
+                  ) : error ? (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="text-center py-10 text-red-500"
+                      >
+                        {error}
+                      </td>
+                    </tr>
+                  ) : /* --- 5. RENDER DARI visibleItems --- */
+                  currentItems.length > 0 ? (
+                    currentItems.map((menu) => (
+                      <tr key={menu.id} className="border-b hover:bg-gray-50">
+                        <td className="p-4 text-gray-700">{menu.id}</td>
 
-              {[...Array(totalPages)].map((_, index) => (
+                        <td className="p-4 font-semibold text-gray-900">
+                          {menu.name}
+                        </td>
+
+                        <td className="p-4 text-gray-600">
+                          {menu.category_name}
+                        </td>
+
+                        <td className="p-4 text-green-600 font-medium">
+                          {formatRupiah(menu.price)}
+                        </td>
+
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              menu.is_active
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {menu.is_active ? "Aktif" : "Tidak Aktif"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 space-x-3">
+                          <button
+                            title="Edit"
+                            onClick={() =>
+                              navigate(`/admin/master-menu/edit/${menu.id}`)
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
+                          >
+                            <FaEdit className="text-sm" />
+                            <span className="font-medium text-sm">Edit</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(menu.id)}
+                            title="Hapus"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-all duration-200 shadow-sm hover:shadow-md"
+                          >
+                            <FaTrashAlt className="text-sm" />
+                            <span className="font-medium text-sm">Hapus</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    /* --- 6. PESAN JIKA HASIL FILTER KOSONG --- */
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="text-center py-10 text-gray-500"
+                      >
+                        Tidak ada menu yang sesuai dengan pencarian/filter Anda.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {/* --- Pagination Controls --- */}
+              <div className="flex justify-center items-center mt-6 space-x-2">
                 <button
-                  key={index}
-                  onClick={() => setCurrentPage(index + 1)}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
                   className={`px-3 py-1 rounded-lg ${
-                    currentPage === index + 1
-                      ? "bg-yellow-600 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    currentPage === 1
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "bg-yellow-500 text-white hover:bg-yellow-600"
                   }`}
                 >
-                  {index + 1}
+                  Prev
                 </button>
-              ))}
 
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className={`px-3 py-1 rounded-lg ${
-                  currentPage === totalPages
-                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                    : "bg-yellow-500 text-white hover:bg-yellow-600"
-                }`}
-              >
-                Next
-              </button>
+                {[...Array(totalPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index + 1)}
+                    className={`px-3 py-1 rounded-lg ${
+                      currentPage === index + 1
+                        ? "bg-yellow-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-lg ${
+                    currentPage === totalPages
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "bg-yellow-500 text-white hover:bg-yellow-600"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

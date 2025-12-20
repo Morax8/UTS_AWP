@@ -152,7 +152,7 @@ export default function CheckoutPage() {
       const orderCode = response.data.order_code;
       setOrderCompleted(true);
       clearCart();
-      navigate(`/track-order?code=${orderCode}`, {
+      navigate(`/track?code=${orderCode}`, {
         state: { successMessage: `Pesanan #${orderCode} berhasil dibuat!` },
       });
     } catch (err) {
