@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 // 1. Import motion
 import { motion } from "framer-motion";
 import zian from "/images/zian.jpg";
+import khairi from "/images/khairi/jpeg";
 
 // --- Komponen Ikon SVG (Tidak berubah) ---
 const CheckIcon = () => (
@@ -117,7 +118,7 @@ export default function AboutPage() {
     {
       name: "Khairiansyah Hafizh",
       role: "Customer Relations",
-      image: "https://placehold.co/600x800/E74C3C/white?text=Khairiansyah",
+      image: khairi,
     },
   ];
 
