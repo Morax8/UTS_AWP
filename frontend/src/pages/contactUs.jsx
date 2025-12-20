@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaPhone,
   FaEnvelope,
@@ -8,6 +8,8 @@ import {
   FaTwitter,
   FaYoutube,
 } from "react-icons/fa";
+import { useAuth } from "../context/authContext";
+import { motion } from "framer-motion";
 
 // --- Komponen baru untuk Input Field dengan Ikon ---
 const InputField = ({ icon, ...props }) => (
@@ -30,10 +32,21 @@ const TextAreaField = (props) => (
 );
 
 export default function ContactPage() {
+  const { user } = useAuth();
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+      }));
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -72,16 +85,26 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
-      <section className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md">
+      <motion.section
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-gradient-to-r from-yellow-300 to-yellow-500 py-20 text-center shadow-md"
+      >
         <h1 className="text-5xl font-bold mb-3">Hubungi Kami</h1>
         <p className="text-lg text-gray-700 max-w-2xl mx-auto">
           Ada pertanyaan, saran, atau ingin memesan langsung? Kami siap
           membantu!
         </p>
-      </section>
+      </motion.section>
 
       <div className="max-w-6xl w-full mx-auto my-16 px-6">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+          className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row"
+        >
           {/* Bagian Kiri: Info Kontak (dengan background) */}
           <div className="md:w-2/5 bg-yellow-500 text-white p-8 md:p-12 space-y-8">
             <h2 className="text-3xl font-bold mb-6">Info Kontak</h2>
@@ -200,7 +223,7 @@ export default function ContactPage() {
               </p>
             )}
           </form>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

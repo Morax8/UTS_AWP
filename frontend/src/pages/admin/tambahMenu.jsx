@@ -37,7 +37,8 @@ export default function AddMenuPage() {
     const fetchCategories = async () => {
       try {
         const token = localStorage.getItem("authToken");
-        const response = await fetch("/api/categories", {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/categories`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!response.ok) throw new Error("Gagal mengambil data kategori.");
@@ -89,7 +90,8 @@ export default function AddMenuPage() {
 
     try {
       const token = localStorage.getItem("authToken");
-      await axios.post("/api/menu", data, {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      await axios.post(`${apiUrl}/api/menu`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

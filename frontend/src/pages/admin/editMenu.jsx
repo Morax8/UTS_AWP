@@ -35,8 +35,9 @@ export default function EditMenu() {
   const fetchMenuData = async () => {
     try {
       const token = localStorage.getItem("authToken");
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      const menuRes = await axios.get(`/api/menu/all`, config);
+      const menuRes = await axios.get(`${apiUrl}/api/menu/all`, config);
       const found = menuRes.data.data.find((m) => m.id === parseInt(id));
       if (!found) {
         alert("Menu tidak ditemukan");
@@ -83,7 +84,8 @@ export default function EditMenu() {
         formData.append(key, fixedData[key])
       );
       if (file) formData.append("image", file);
-      await axios.put(`/api/menu/${id}`, formData, {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      await axios.put(`${apiUrl}/api/menu/${id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

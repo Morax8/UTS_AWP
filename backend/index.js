@@ -17,7 +17,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "https://kateringku.onrender.com", // URL frontend di Render (tanpa slash di akhir)
+      "http://localhost:3000", // Untuk development
+      "http://localhost:5173", // Vite dev server
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
 // Gunakan Routes
@@ -33,18 +44,47 @@ app.use("/api/reports", reportRoutes);
 // Route opsional untuk testing koneksi database
 app.get("/api/test-db", async (req, res) => {
   try {
+    console.log("Testing database connection...");
+    console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
+    console.log("DB_HOST:", process.env.DB_HOST);
+    console.log("DB_USER:", process.env.DB_USER);
+    console.log("DB_NAME:", process.env.DB_NAME);
+
     const [result] = await db.query(`SELECT NOW()`);
     res.json({
       message: "Koneksi database berhasil!",
       time: result[0]["NOW()"],
+      config: {
+        usingDatabaseUrl: !!process.env.DATABASE_URL,
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        database: process.env.DB_NAME,
+      },
     });
   } catch (error) {
     console.error("Error saat query ke database:", error);
-    res.status(500).json({ message: "Gagal terhubung ke database." });
+    res.status(500).json({
+      message: "Gagal terhubung ke database.",
+      error: error.message,
+      config: {
+        usingDatabaseUrl: !!process.env.DATABASE_URL,
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        database: process.env.DB_NAME,
+      },
+    });
   }
 });
 
-// app.listen(PORT, () => {
-//   console.log(`Server berjalan di port ${PORT}`);
-// });
-module.exports = app;
+// Route untuk test CORS
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "Backend is running!",
+    timestamp: new Date().toISOString(),
+    origin: req.headers.origin,
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server berjalan di port ${PORT}`);
+});

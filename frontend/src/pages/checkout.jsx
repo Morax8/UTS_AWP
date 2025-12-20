@@ -62,7 +62,7 @@ const AddressIcon = () => (
 
 export default function CheckoutPage() {
   const { cartItems, totalPrice, clearCart } = useCart();
-  const { currentUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -71,23 +71,58 @@ export default function CheckoutPage() {
     customerAddress: "",
   });
   const [loading, setLoading] = useState(false);
+  const [orderCompleted, setOrderCompleted] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (currentUser) {
-      setFormData({
-        customerName: currentUser.name || "",
-        customerPhone: currentUser.phone || "",
-        customerAddress: currentUser.address || "",
-      });
-    }
-  }, [currentUser]);
+    const fetchUserProfile = async () => {
+      if (user) {
+        try {
+          const token = localStorage.getItem("authToken");
+          const apiUrl = import.meta.env.VITE_API_URL || "";
+          console.log("Fetching user profile with token:", token ? "✓" : "✗");
+
+          const response = await axios.get(`${apiUrl}/api/users/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          console.log("User profile response:", response.data);
+
+          if (response.data.success && response.data.data) {
+            const userData = response.data.data;
+            console.log("Setting form data with:", userData);
+            setFormData({
+              customerName: userData.name || "",
+              customerPhone: userData.phone || "",
+              customerAddress: userData.address || "",
+            });
+          } else {
+            throw new Error("Response data structure invalid");
+          }
+        } catch (err) {
+          console.error(
+            "Gagal fetch profil user:",
+            err.response?.data || err.message
+          );
+          // Fallback ke currentUser jika API gagal
+          console.log("Fallback to auth user:", user);
+          setFormData({
+            customerName: user.name || "",
+            customerPhone: user.phone || "",
+            customerAddress: user.address || "",
+          });
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
 
   useEffect(() => {
-    if (cartItems.length === 0 && !loading) {
+    if (cartItems.length === 0 && !loading && !orderCompleted) {
       navigate("/menu");
     }
-  }, [cartItems, loading, navigate]);
+  }, [cartItems, loading, orderCompleted, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -108,12 +143,14 @@ export default function CheckoutPage() {
         quantity: item.quantity,
         unit_price: item.price,
       })),
-      user_id: currentUser ? currentUser.id : null,
+      user_id: user ? user.id : null,
     };
 
     try {
-      const response = await axios.post("/api/orders", orderPayload);
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await axios.post(`${apiUrl}/api/orders`, orderPayload);
       const orderCode = response.data.order_code;
+      setOrderCompleted(true);
       clearCart();
       navigate(`/track-order?code=${orderCode}`, {
         state: { successMessage: `Pesanan #${orderCode} berhasil dibuat!` },

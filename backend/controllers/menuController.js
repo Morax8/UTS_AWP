@@ -1,14 +1,18 @@
 const db = require("../config/db");
 require("dotenv").config();
-const { UploadManager } = require("@bytescale/sdk");
-const uploadManager = new UploadManager({
-  apiKey: process.env.BYTESCALE_API_KEY,
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 // @desc    Get all active menu items with their categories
 // @route   GET /api/menu
 // @access  Public
 const getAllMenuItems = async (req, res) => {
   try {
+    console.log("Fetching all menu items...");
     const query = `
       SELECT 
         mi.id, 
@@ -16,15 +20,17 @@ const getAllMenuItems = async (req, res) => {
         mi.description, 
         mi.price, 
         mi.image_url,
-        mi.is_active, 
-        mc.name AS category_name 
+        mi.is_active,
+        mi.category_id,
+        mc.name AS category_name
       FROM menu_items mi
-      JOIN menu_categories mc ON mi.category_id = mc.id
+      LEFT JOIN menu_categories mc ON mi.category_id = mc.id
       WHERE mi.is_active = TRUE
       ORDER BY mi.id;
     `;
 
     const [rows] = await db.query(query);
+    console.log("Menu items found:", rows.length);
 
     res.status(200).json({
       success: true,
@@ -33,23 +39,30 @@ const getAllMenuItems = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching menu items:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
 const getFeaturedMenuItems = async (req, res) => {
   try {
+    console.log("Fetching featured menu items...");
     const query = `
-      SELECT id, name, description, image_url 
+      SELECT id, name, description, image_url, price
       FROM menu_items
-      WHERE is_active = TRUE AND is_featured = TRUE
+      WHERE is_active = TRUE
       ORDER BY id DESC
       LIMIT 3;
     `;
     const [rows] = await db.query(query);
+    console.log("Featured menu items found:", rows.length);
     res.status(200).json({ success: true, data: rows });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error("Error fetching featured menu items:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 
@@ -68,14 +81,37 @@ const createMenuItem = async (req, res) => {
   }
 
   try {
-    // --- PERBAIKAN 3: Gunakan method 'upload' dari UploadManager ---
-    const { fileUrl } = await uploadManager.upload({
-      data: req.file.buffer,
-      mime: req.file.mimetype,
-      originalFileName: req.file.originalname,
+    console.log("Creating new menu item:", {
+      name,
+      category_id,
+      has_file: !!file,
     });
 
-    const imageUrl = fileUrl; // URL gambar dari Bytescale
+    // Proses Upload ke Cloudinary via Buffer
+    console.log("Uploading image to Cloudinary...");
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "kateringku-menu",
+          resource_type: "auto", // Biar aman kalau upload PDF/Video
+        },
+        (error, result) => {
+          if (error) {
+            console.error("Cloudinary upload error:", error);
+            reject(error);
+          } else {
+            console.log("Image uploaded successfully:", result.secure_url);
+            resolve(result);
+          }
+        }
+      );
+      uploadStream.end(file.buffer); // Ini ambil dari MemoryStorage
+    });
+    const imageUrl = uploadResult.secure_url;
+
+    // Convert is_active to integer (0 or 1)
+    const isActive =
+      is_active === true || is_active === 1 || is_active === "1" ? 1 : 0;
 
     // Simpan URL ke database
     const query = `
@@ -87,10 +123,11 @@ const createMenuItem = async (req, res) => {
       price,
       category_id,
       description,
-      is_active,
+      isActive,
       imageUrl,
     ]);
 
+    console.log("Menu item created successfully");
     res
       .status(201)
       .json({ success: true, message: "Menu baru berhasil ditambahkan." });
@@ -98,7 +135,11 @@ const createMenuItem = async (req, res) => {
     console.error("Error creating menu:", error);
     res
       .status(500)
-      .json({ success: false, message: "Gagal menambahkan menu." });
+      .json({
+        success: false,
+        message: "Gagal menambahkan menu.",
+        error: error.message,
+      });
   }
 };
 
@@ -118,17 +159,34 @@ const updateMenuItem = async (req, res) => {
   }
 
   try {
+    console.log("Updating menu item:", { id, name, has_file: !!file });
+
     let imageUrl;
 
-    // kalau ada file baru, upload ke Bytescale
+    // kalau ada file baru, upload ke Cloudinary
     if (file) {
-      const { fileUrl } = await uploadManager.upload({
-        data: file.buffer,
-        mime: file.mimetype,
-        originalFileName: file.originalname,
+      console.log("Uploading new image to Cloudinary...");
+      const uploadResult = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: "kateringku-menu" },
+          (error, result) => {
+            if (error) {
+              console.error("Cloudinary upload error:", error);
+              reject(error);
+            } else {
+              console.log("Image uploaded successfully:", result.secure_url);
+              resolve(result);
+            }
+          }
+        );
+        uploadStream.end(file.buffer);
       });
-      imageUrl = fileUrl;
+      imageUrl = uploadResult.secure_url;
     }
+
+    // Convert is_active to integer (0 or 1)
+    const isActive =
+      is_active === true || is_active === 1 || is_active === "1" ? 1 : 0;
 
     // kalau gak ada file baru, jangan ubah image_url di DB
     const query = file
@@ -144,11 +202,17 @@ const updateMenuItem = async (req, res) => {
         `;
 
     const params = file
-      ? [name, price, category_id, description, is_active, imageUrl, id]
-      : [name, price, category_id, description, is_active, id];
+      ? [name, price, category_id, description, isActive, imageUrl, id]
+      : [name, price, category_id, description, isActive, id];
+
+    console.log("Update query params:", {
+      query_type: file ? "with_image" : "no_image",
+      params,
+    });
 
     await db.query(query, params);
 
+    console.log("Menu updated successfully");
     res
       .status(200)
       .json({ success: true, message: "Menu berhasil diperbarui." });
@@ -156,7 +220,11 @@ const updateMenuItem = async (req, res) => {
     console.error("Error updating menu:", error);
     res
       .status(500)
-      .json({ success: false, message: "Gagal memperbarui menu." });
+      .json({
+        success: false,
+        message: "Gagal memperbarui menu.",
+        error: error.message,
+      });
   }
 };
 
@@ -212,3 +280,4 @@ module.exports = {
   deleteMenuItem,
   getAllMenuItemsNoFilter,
 };
+

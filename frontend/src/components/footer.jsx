@@ -61,7 +61,7 @@ const Footer = () => {
         </div>
         <hr className="border-gray-300 mb-4" />
         <div className="text-center text-sm text-gray-600">
-          © {new Date().getFullYear()} KateringKu. Dibuat dengan ❤️ untuk UTS.
+          © {new Date().getFullYear()} KateringKu. Dibuat dengan ❤️ untuk UAS.
         </div>
       </div>
     </footer>

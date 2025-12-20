@@ -5,61 +5,127 @@ const db = require("../config/db");
 // @access  Private (Admin)
 const getDashboardStats = async (req, res) => {
   try {
-    // 1. Statistik Utama
-    const [ordersThisMonth] = await db.query(
-      `SELECT COUNT(id) as totalOrders FROM orders WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())`
-    );
-    const [revenueThisMonth] = await db.query(
-      `SELECT SUM(total_amount) as totalRevenue FROM orders WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())`
-    );
-    const [totalCustomers] = await db.query(
-      `SELECT COUNT(id) as totalUsers FROM users WHERE role = 'customer'`
-    );
+    console.log("Fetching dashboard stats...");
 
-    // 2. Data untuk Tabel & Grafik Menu Terlaris
-    const [topMenus] = await db.query(
-      `SELECT mi.name, SUM(oi.quantity) as total_sold
-       FROM order_items oi
-       JOIN menu_items mi ON oi.menu_item_id = mi.id
-       GROUP BY mi.id
-       ORDER BY total_sold DESC
-       LIMIT 5` // Ambil 5 teratas
-    );
+    // Initialize default values
+    let ordersThisMonth = 0;
+    let revenueThisMonth = 0;
+    let totalCustomers = 0;
+    let topMenus = [];
+    let dailySales = [];
+    let categorySales = [];
 
-    // 3. Data untuk Grafik Pemasukan Harian (7 hari terakhir)
-    const [dailySales] = await db.query(
-      `SELECT DATE_FORMAT(created_at, '%d %b') as day, SUM(total_amount) as sales 
-       FROM orders 
-       WHERE created_at >= CURDATE() - INTERVAL 7 DAY
-       GROUP BY DATE(created_at)
-       ORDER BY DATE(created_at) ASC`
-    );
+    // 1. Statistik Utama - dengan error handling
+    try {
+      const [ordersResult] = await db.query(
+        `SELECT COUNT(id) as totalOrders FROM orders WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())`
+      );
+      ordersThisMonth = ordersResult[0]?.totalOrders || 0;
+    } catch (err) {
+      console.log("Orders query failed:", err.message);
+    }
 
-    // 4. Data untuk Proporsi Penjualan Kategori
-    const [categorySales] = await db.query(
-      `SELECT mc.name, SUM(oi.quantity * oi.unit_price) as category_total
-       FROM order_items oi
-       JOIN menu_items mi ON oi.menu_item_id = mi.id
-       JOIN menu_categories mc ON mi.category_id = mc.id
-       JOIN orders o ON oi.order_id = o.id
-       WHERE MONTH(o.created_at) = MONTH(CURDATE()) AND YEAR(o.created_at) = YEAR(CURDATE())
-       GROUP BY mc.id
-       ORDER BY category_total DESC`
-    );
+    try {
+      const [revenueResult] = await db.query(
+        `SELECT SUM(total_amount) as totalRevenue FROM orders WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())`
+      );
+      revenueThisMonth = revenueResult[0]?.totalRevenue || 0;
+    } catch (err) {
+      console.log("Revenue query failed:", err.message);
+    }
+
+    try {
+      const [customersResult] = await db.query(
+        `SELECT COUNT(id) as totalUsers FROM users WHERE role = 'user' OR role = 'customer'`
+      );
+      totalCustomers = customersResult[0]?.totalUsers || 0;
+    } catch (err) {
+      console.log("Customers query failed:", err.message);
+    }
+
+    // 2. Data untuk Tabel & Grafik Menu Terlaris - dengan error handling
+    try {
+      const [topMenusResult] = await db.query(
+        `SELECT mi.name, SUM(oi.quantity) as total_sold
+         FROM order_items oi
+         JOIN menu_items mi ON oi.menu_item_id = mi.id
+         GROUP BY mi.id, mi.name
+         ORDER BY total_sold DESC
+         LIMIT 5`
+      );
+      topMenus = topMenusResult;
+    } catch (err) {
+      console.log("Top menus query failed:", err.message);
+    }
+
+    // 3. Data untuk Grafik Pemasukan Harian (3 bulan terakhir) - dengan error handling
+    try {
+      // Ambil data per-hari selama 3 bulan terakhir
+      const [dailySalesResult] = await db.query(
+        `SELECT DATE_FORMAT(created_at, '%d %b') as day, SUM(total_amount) as sales 
+         FROM orders 
+         WHERE created_at >= CURDATE() - INTERVAL 3 MONTH
+         GROUP BY DATE(created_at), DATE_FORMAT(created_at, '%d %b')
+         ORDER BY DATE(created_at) ASC`
+      );
+      dailySales = dailySalesResult;
+    } catch (err) {
+      console.log("Daily sales query failed:", err.message);
+    }
+
+    // 4. Data untuk Proporsi Penjualan Kategori (3 bulan terakhir) - dengan error handling
+    try {
+      const [categorySalesResult] = await db.query(
+        `SELECT mc.name, SUM(oi.quantity * oi.unit_price) as category_total
+         FROM order_items oi
+         JOIN menu_items mi ON oi.menu_item_id = mi.id
+         JOIN menu_categories mc ON mi.category_id = mc.id
+         JOIN orders o ON oi.order_id = o.id
+         WHERE o.created_at >= CURDATE() - INTERVAL 3 MONTH
+         GROUP BY mc.id, mc.name
+         ORDER BY category_total DESC`
+      );
+      categorySales = categorySalesResult;
+    } catch (err) {
+      console.log("Category sales query failed:", err.message);
+    }
+
+    // Normalisasi tipe data: pastikan angka dikirim sebagai Number ke frontend
+    ordersThisMonth = Number(ordersThisMonth) || 0;
+    revenueThisMonth = Number(revenueThisMonth) || 0;
+    totalCustomers = Number(totalCustomers) || 0;
+
+    topMenus = (topMenus || []).map((m) => ({
+      ...m,
+      total_sold: Number(m.total_sold) || 0,
+    }));
+
+    dailySales = (dailySales || []).map((d) => ({
+      ...d,
+      sales: Number(d.sales) || 0,
+    }));
+
+    categorySales = (categorySales || []).map((c) => ({
+      ...c,
+      category_total: Number(c.category_total) || 0,
+    }));
 
     const stats = {
-      totalOrdersThisMonth: ordersThisMonth[0].totalOrders || 0,
-      totalRevenueThisMonth: revenueThisMonth[0].totalRevenue || 0,
-      totalCustomers: totalCustomers[0].totalUsers || 0,
+      totalOrdersThisMonth: ordersThisMonth,
+      totalRevenueThisMonth: revenueThisMonth,
+      totalCustomers: totalCustomers,
       topMenus: topMenus,
       dailySales: dailySales,
       categorySales: categorySales,
     };
 
+    console.log("Dashboard stats:", stats);
     res.status(200).json({ success: true, data: stats });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: error.message });
   }
 };
 

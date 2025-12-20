@@ -14,5 +14,21 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    outDir: "dist",
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          router: ["react-router-dom"],
+        },
+      },
+    },
+  },
+  // Untuk SPA routing di production
+  preview: {
+    historyApiFallback: true,
+  },
 });
 

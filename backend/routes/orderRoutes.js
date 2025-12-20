@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { protect } = require("../middleware/authMiddleware");
+
 // Pastikan createOrder sudah di-import
 const {
   trackOrder,
@@ -15,8 +17,9 @@ router.get("/track", trackOrder);
 // Rute untuk membuat pesanan baru
 router.post("/", createOrder);
 
-router.get("/", getAllOrders); // buat admin
-router.put("/:id/status", updateOrderStatus);
-router.delete("/:id", deleteOrder);
+// Rute admin - perlu authentication
+router.get("/", protect, getAllOrders); // buat admin
+router.put("/:id/status", protect, updateOrderStatus);
+router.delete("/:id", protect, deleteOrder);
 
 module.exports = router;

@@ -39,7 +39,7 @@ export default function NotFoundPage() {
         </p>
         <Link to="/">
           <button className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-6 py-3 rounded-lg shadow transition transform hover:scale-105">
-            Kembali ke Beranda
+            Kembali ke Beranda yuk!
           </button>
         </Link>
       </div>

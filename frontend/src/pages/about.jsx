@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 // 1. Import motion
 import { motion } from "framer-motion";
+import zian from "../assets/zian.jpg";
 
 // --- Komponen Ikon SVG (Tidak berubah) ---
 const CheckIcon = () => (
@@ -106,7 +107,7 @@ export default function AboutPage() {
     {
       name: "Aditya Zianur",
       role: "Operations Manager",
-      image: "https://placehold.co/600x800/3498DB/white?text=Aditya",
+      image: zian,
     },
     {
       name: "Raditya Agra",

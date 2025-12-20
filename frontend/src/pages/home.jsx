@@ -68,7 +68,8 @@ export default function HomePage() {
     const fetchFeaturedMenu = async () => {
       try {
         // Simulasi fetch data (gantilah dengan API-mu)
-        const response = await fetch("/api/menu/featured");
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/menu/featured`);
         const result = await response.json();
         if (result.success) {
           setFeaturedMenu(result.data);

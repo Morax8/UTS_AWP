@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/authContext";
 import { useCart } from "../context/cartContext";
 import { FaShoppingCart, FaBars, FaTimes } from "react-icons/fa";
@@ -44,17 +44,35 @@ const getNavLinkClass = ({ isActive }) =>
     ? "text-yellow-600 font-semibold"
     : "text-gray-500 hover:text-yellow-600 font-medium transition-colors";
 
+const getMobileNavLinkClass = ({ isActive }) =>
+  `flex items-center justify-between rounded-xl px-4 py-3 text-base transition-all ${
+    isActive
+      ? "bg-yellow-50 text-yellow-600 font-semibold"
+      : "text-gray-600 hover:bg-gray-100 hover:text-yellow-600"
+  }`;
+
+const navLinks = [
+  { to: "/", label: "Beranda" },
+  { to: "/menu", label: "Menu" },
+  { to: "/track", label: "Lacak Pesanan" },
+  { to: "/about", label: "Tentang" },
+  { to: "/contact-us", label: "Kontak" },
+];
+
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { cart } = useCart();
+  const { cartItems } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const profileMenuRef = useRef(null);
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   // --- PERBAIKAN DI SINI ---
   // Memberikan fallback array kosong `[]` untuk mencegah error jika cart masih undefined
-  const cartItemCount = (cart || []).reduce(
+  const cartItemCount = (cartItems || []).reduce(
     (sum, item) => sum + item.quantity,
     0
   );
@@ -76,7 +94,7 @@ export default function Navbar() {
   // Menutup menu mobile saat navigasi
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [navigate]);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     if (window.confirm("Anda yakin ingin keluar?")) {
@@ -86,7 +104,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <nav className="relative bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Kiri: Logo */}
@@ -111,6 +129,9 @@ export default function Navbar() {
               </NavLink>
               <NavLink to="/about" className={getNavLinkClass}>
                 Tentang
+              </NavLink>
+              <NavLink to="/faq" className={getNavLinkClass}>
+                FAQ
               </NavLink>
               <NavLink to="/contact-us" className={getNavLinkClass}>
                 Kontak
@@ -213,49 +234,127 @@ export default function Navbar() {
 
       {/* Menu Dropdown Mobile */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white shadow-lg border-t">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <NavLink to="/" className={getNavLinkClass}>
-              Beranda
-            </NavLink>
-            <NavLink to="/menu" className={getNavLinkClass}>
-              Menu
-            </NavLink>
-            <NavLink to="/track" className={getNavLinkClass}>
-              Lacak Pesanan
-            </NavLink>
-            <NavLink to="/about" className={getNavLinkClass}>
-              Tentang
-            </NavLink>
-            <NavLink to="/contact-us" className={getNavLinkClass}>
-              Kontak
-            </NavLink>
+        <div className="md:hidden absolute inset-x-0 top-20 bg-white shadow-xl border-t border-gray-100 rounded-b-3xl">
+          <div className="px-4 py-6 space-y-6">
+            <div className="flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMobileMenu}
+                  className={(props) => getMobileNavLinkClass(props)}
+                >
+                  <span>{link.label}</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </NavLink>
+              ))}
+            </div>
 
-            <div className="border-t my-2"></div>
+            <div className="h-px bg-gray-100" />
 
             {!user ? (
-              <Link to="/login" className="block text-center mt-2">
-                <button className="w-full px-5 py-2 text-sm font-semibold text-white bg-yellow-500 rounded-lg shadow-sm hover:bg-yellow-600 transition-all">
-                  Login
+              <Link to="/login" className="block" onClick={closeMobileMenu}>
+                <button className="w-full rounded-xl bg-yellow-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-yellow-600">
+                  Masuk / Daftar
                 </button>
               </Link>
             ) : (
-              <>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    Akun Anda
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-700">
+                    {user.name}
+                  </p>
+                  {user.email && (
+                    <p className="text-xs text-gray-500">{user.email}</p>
+                  )}
+                </div>
+
                 {user.role === "admin" && (
-                  <NavLink to="/admin/dashboard" className={getNavLinkClass}>
-                    Dashboard
+                  <NavLink
+                    to="/admin/dashboard"
+                    onClick={closeMobileMenu}
+                    className={(props) => getMobileNavLinkClass(props)}
+                  >
+                    <span>Dashboard Admin</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 text-gray-300"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
                   </NavLink>
                 )}
-                <NavLink to="/profile" className={getNavLinkClass}>
-                  Profil Saya
-                </NavLink>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 text-red-600 font-medium"
+
+                <NavLink
+                  to="/profile"
+                  onClick={closeMobileMenu}
+                  className={(props) => getMobileNavLinkClass(props)}
                 >
-                  Logout
+                  <span>Profil Saya</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </NavLink>
+
+                <button
+                  onClick={() => {
+                    closeMobileMenu();
+                    handleLogout();
+                  }}
+                  className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-base font-semibold text-red-500 transition-all hover:bg-red-50"
+                >
+                  <span>Keluar</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                  </svg>
                 </button>
-              </>
+              </div>
             )}
           </div>
         </div>

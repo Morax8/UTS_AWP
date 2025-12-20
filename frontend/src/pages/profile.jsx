@@ -93,7 +93,8 @@ export default function ProfilePage() {
         return;
       }
       try {
-        const response = await fetch("/api/users/profile", {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/users/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const result = await response.json();
@@ -121,7 +122,8 @@ export default function ProfilePage() {
     setSuccess("");
     const token = localStorage.getItem("authToken");
     try {
-      const response = await fetch("/api/users/profile", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${apiUrl}/api/users/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

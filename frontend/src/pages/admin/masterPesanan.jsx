@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaSearch, FaEye, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import {
+  FaSearch,
+  FaEye,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaBars,
+} from "react-icons/fa";
 import axios from "axios";
 import Sidebar from "../../components/sidebar";
 
@@ -9,27 +15,47 @@ export default function MasterPesanan() {
   const [pesananData, setPesananData] = useState([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // === Fetch data dari backend ===
   useEffect(() => {
-    axios
-      .get("/api/orders") // ganti sesuai route lu
-      .then((res) => {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          console.error("Token tidak ditemukan, redirect ke login");
+          navigate("/login");
+          return;
+        }
+
+        const res = await axios.get(`${apiUrl}/api/orders`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
         if (res.data.success) {
           setPesananData(res.data.data);
         }
-      })
-      .catch((err) => console.error("Gagal fetch pesanan:", err));
-  }, []);
+      } catch (err) {
+        console.error("Gagal fetch pesanan:", err);
+        if (err.response?.status === 401) {
+          navigate("/login");
+        }
+      }
+    };
+    fetchData();
+  }, [navigate]);
 
   // Filter berdasarkan pencarian dan status
-  const filteredData = pesananData.filter((p) => {
-    const matchSearch =
-      p.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-      p.order_code.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus ? p.status === filterStatus : true;
-    return matchSearch && matchStatus;
-  });
+  const filteredData = pesananData
+    .filter((p) => {
+      const matchSearch =
+        p.customer_name.toLowerCase().includes(search.toLowerCase()) ||
+        p.order_code.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = filterStatus ? p.status === filterStatus : true;
+      return matchSearch && matchStatus;
+    })
+    .sort((a, b) => b.id - a.id);
 
   // Fungsi untuk mendapatkan style status
   const getStatusStyle = (status) => {
@@ -48,7 +74,24 @@ export default function MasterPesanan() {
   // Update status pesanan
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await axios.put(`/api/orders/${id}/status`, { status: newStatus });
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const token = localStorage.getItem("authToken");
+
+      if (!token) {
+        alert("Sesi Anda berakhir. Silakan login kembali.");
+        navigate("/login");
+        return;
+      }
+
+      await axios.put(
+        `${apiUrl}/api/orders/${id}/status`,
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setPesananData((prev) =>
         prev.map((p) => (p.id === id ? { ...p, status: newStatus } : p))
       );
@@ -64,7 +107,20 @@ export default function MasterPesanan() {
     if (!window.confirm("Yakin mau hapus pesanan ini?")) return;
 
     try {
-      await axios.delete(`/api/orders/${id}`);
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const token = localStorage.getItem("authToken");
+
+      if (!token) {
+        alert("Sesi Anda berakhir. Silakan login kembali.");
+        navigate("/login");
+        return;
+      }
+
+      await axios.delete(`${apiUrl}/api/orders/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setPesananData((prev) => prev.filter((p) => p.id !== id));
       alert("Pesanan berhasil dihapus!");
     } catch (error) {
@@ -89,21 +145,49 @@ export default function MasterPesanan() {
   }, [search, filterStatus]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-yellow-50">
+    <div className="min-h-screen bg-yellow-50">
       {/* === Wrapper utama === */}
-      <div className="flex flex-1">
-        <Sidebar />
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        {/* Sidebar untuk desktop */}
+        <div className="hidden lg:flex">
+          <Sidebar />
+        </div>
+
+        {/* Sidebar mobile overlay */}
+        <div
+          className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-yellow-500 shadow-2xl transition-transform duration-300 lg:hidden ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <Sidebar />
+        </div>
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* === Main Content: Master Pesanan === */}
-        <main className="flex-1 p-10">
+        <main className="flex-1 p-6 sm:p-8 lg:p-10">
           {/* Header - Ditambahkan animasi slide-in-down */}
           <header
-            className="flex justify-between items-center mb-8 animate-slide-in-down"
+            className="flex flex-wrap items-center justify-between gap-4 mb-8 animate-slide-in-down"
             style={{ animationDelay: "100ms" }}
           >
-            <h2 className="text-3xl font-bold text-yellow-700">
-              Master Pesanan
-            </h2>
-            <div className="text-right">
+            <div className="flex items-center gap-3">
+              <button
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-yellow-500 text-white shadow-lg transition hover:bg-yellow-600 lg:hidden"
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label="Buka menu admin"
+              >
+                <FaBars />
+              </button>
+              <h2 className="text-2xl sm:text-3xl font-bold text-yellow-700">
+                Master Pesanan
+              </h2>
+            </div>
+            <div className="text-left sm:text-right">
               <p className="font-semibold text-gray-700">
                 Kelola Semua Transaksi Pesanan
               </p>
