@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import Sidebar from "../../components/sidebar";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { FaBars } from "react-icons/fa";
 
 // --- Komponen Ikon SVG (Pengganti React-Icons) ---
 const FaListAlt = () => (
@@ -57,6 +58,7 @@ const formatRupiah = (number) => {
 
 export default function LaporanPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
 
   const [reportData, setReportData] = useState([]);
@@ -66,6 +68,7 @@ export default function LaporanPage() {
 
   const [filterMonth, setFilterMonth] = useState(new Date().getMonth() + 1);
   const [filterYear, setFilterYear] = useState(new Date().getFullYear());
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -95,6 +98,13 @@ export default function LaporanPage() {
 
     fetchReport();
   }, [filterMonth, filterYear, logout]);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   const handleExportExcel = () => {
     if (!reportData || reportData.length === 0) {
@@ -188,199 +198,234 @@ export default function LaporanPage() {
   const handlePageChange = (page) => setCurrentPage(page);
 
   return (
-    <div className="min-h-screen flex">
-      <Sidebar />
-      <main className="flex-1 p-8 bg-gray-100">
-        <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <FaListAlt /> Laporan Penjualan
-          </h2>
-          <button
-            onClick={handleExportExcel}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-2 px-5 rounded-lg shadow-lg transition-transform transform hover:scale-105"
-          >
-            <FaFileExport /> Export ke Excel
-          </button>
-        </header>
-
+    <div className="min-h-screen bg-gray-100">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <div className="hidden lg:flex">
+          <Sidebar />
+        </div>
         <div
-          id="filter-section"
-          className="bg-white rounded-xl shadow-lg p-6 mb-8 flex flex-wrap gap-4 items-center"
+          className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-yellow-500 shadow-2xl transition-transform duration-300 lg:hidden ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
         >
-          <h4 className="font-semibold text-gray-700 flex items-center gap-2">
-            <FaFilter className="text-yellow-600" /> Filter Periode:
-          </h4>
-          <div className="flex items-center gap-2">
-            <label htmlFor="month" className="text-gray-600 text-sm">
-              Bulan:
-            </label>
-            <select
-              id="month"
-              value={filterMonth}
-              onChange={(e) => setFilterMonth(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2"
-            >
-              <option value="all">Semua</option>
-              <option value="1">Januari</option>
-              <option value="2">Februari</option>
-              <option value="3">Maret</option>
-              <option value="4">April</option>
-              <option value="5">Mei</option>
-              <option value="6">Juni</option>
-              <option value="7">Juli</option>
-              <option value="8">Agustus</option>
-              <option value="9">September</option>
-              <option value="10">Oktober</option>
-              <option value="11">November</option>
-              <option value="12">Desember</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="year" className="text-gray-600 text-sm">
-              Tahun:
-            </label>
-            <select
-              id="year"
-              value={filterYear}
-              onChange={(e) => setFilterYear(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2"
-            >
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-            </select>
-          </div>
+          <Sidebar />
         </div>
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+            onClick={closeSidebar}
+          />
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-xl p-6 border-l-4 border-green-500">
-            <p className="text-gray-500 text-sm">
-              Total Pemasukan (Periode Terfilter)
-            </p>
-            <h3 className="text-3xl font-extrabold text-green-700 mt-1">
-              {formatRupiah(summary.totalRevenue)}
-            </h3>
-          </div>
-          <div className="bg-white rounded-xl shadow-xl p-6 border-l-4 border-yellow-500">
-            <p className="text-gray-500 text-sm">
-              Total Pesanan (Periode Terfilter)
-            </p>
-            <h3 className="text-3xl font-extrabold text-yellow-700 mt-1">
-              {summary.totalOrders} Pesanan
-            </h3>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h4 className="text-xl font-semibold text-gray-700 mb-4">
-            Detail Laporan Transaksi
-          </h4>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left">
-              <thead className="bg-gray-50 border-b-2 border-gray-200">
-                <tr>
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Kode Pesanan
-                  </th>
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Tanggal
-                  </th>
-                  <th className="p-4 text-sm font-semibold text-gray-600">
-                    Nama Pelanggan
-                  </th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 text-right">
-                    Total Harga
-                  </th>
-                  <th className="p-4 text-sm font-semibold text-gray-600 text-center">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-10">
-                      Memuat data...
-                    </td>
-                  </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-10 text-red-500">
-                      {error}
-                    </td>
-                  </tr>
-                ) : reportData.length > 0 ? (
-                  currentData.map((item) => (
-                    <tr key={item.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 font-medium text-yellow-700">
-                        {item.order_code}
-                      </td>
-                      <td className="p-4 text-gray-600">
-                        {new Date(item.created_at).toLocaleDateString("id-ID")}
-                      </td>
-                      <td className="p-4 text-gray-800 font-semibold">
-                        {item.customer_name}
-                      </td>
-                      <td className="p-4 text-right font-bold text-green-600">
-                        {formatRupiah(item.total_amount)}
-                      </td>
-                      <td className="p-4 text-center">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            item.status === "Selesai"
-                              ? "bg-green-100 text-green-800"
-                              : item.status === "Dibatalkan"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="text-center py-10 text-gray-500">
-                      Tidak ada data untuk periode ini.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <div className="flex justify-center items-center gap-2 mt-6">
+        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+          <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
               <button
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-                className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-yellow-500 text-white shadow-lg transition hover:bg-yellow-600 lg:hidden"
+                onClick={openSidebar}
+                aria-label="Buka menu admin"
               >
-                Prev
+                <FaBars />
               </button>
+              <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-800">
+                <FaListAlt /> Laporan Penjualan
+              </h2>
+            </div>
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-5 py-2 font-semibold text-white shadow-lg transition transform hover:scale-105 hover:from-blue-600 hover:to-indigo-700"
+            >
+              <FaFileExport /> Export ke Excel
+            </button>
+          </header>
 
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 rounded-md ${
-                    currentPage === i + 1
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => handlePageChange(currentPage + 1)}
-                className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+          <div
+            id="filter-section"
+            className="mb-8 flex flex-col gap-4 rounded-xl bg-white p-6 shadow-lg sm:flex-row sm:flex-wrap sm:items-center"
+          >
+            <h4 className="font-semibold text-gray-700 flex items-center gap-2">
+              <FaFilter className="text-yellow-600" /> Filter Periode:
+            </h4>
+            <div className="flex items-center gap-2">
+              <label htmlFor="month" className="text-gray-600 text-sm">
+                Bulan:
+              </label>
+              <select
+                id="month"
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                className="border border-gray-300 rounded-lg p-2"
               >
-                Next
-              </button>
+                <option value="all">Semua</option>
+                <option value="1">Januari</option>
+                <option value="2">Februari</option>
+                <option value="3">Maret</option>
+                <option value="4">April</option>
+                <option value="5">Mei</option>
+                <option value="6">Juni</option>
+                <option value="7">Juli</option>
+                <option value="8">Agustus</option>
+                <option value="9">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="year" className="text-gray-600 text-sm">
+                Tahun:
+              </label>
+              <select
+                id="year"
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="border border-gray-300 rounded-lg p-2"
+              >
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+              </select>
             </div>
           </div>
-        </div>
-      </main>
+
+          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="bg-white rounded-xl shadow-xl p-6 border-l-4 border-green-500">
+              <p className="text-gray-500 text-sm">
+                Total Pemasukan (Periode Terfilter)
+              </p>
+              <h3 className="text-3xl font-extrabold text-green-700 mt-1">
+                {formatRupiah(summary.totalRevenue)}
+              </h3>
+            </div>
+            <div className="bg-white rounded-xl shadow-xl p-6 border-l-4 border-yellow-500">
+              <p className="text-gray-500 text-sm">
+                Total Pesanan (Periode Terfilter)
+              </p>
+              <h3 className="text-3xl font-extrabold text-yellow-700 mt-1">
+                {summary.totalOrders} Pesanan
+              </h3>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-white p-6 shadow-lg">
+            <h4 className="text-xl font-semibold text-gray-700 mb-4">
+              Detail Laporan Transaksi
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left">
+                <thead className="bg-gray-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Kode Pesanan
+                    </th>
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Tanggal
+                    </th>
+                    <th className="p-4 text-sm font-semibold text-gray-600">
+                      Nama Pelanggan
+                    </th>
+                    <th className="p-4 text-sm font-semibold text-gray-600 text-right">
+                      Total Harga
+                    </th>
+                    <th className="p-4 text-sm font-semibold text-gray-600 text-center">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-10">
+                        Memuat data...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="text-center py-10 text-red-500"
+                      >
+                        {error}
+                      </td>
+                    </tr>
+                  ) : reportData.length > 0 ? (
+                    currentData.map((item) => (
+                      <tr key={item.id} className="border-b hover:bg-gray-50">
+                        <td className="p-4 font-medium text-yellow-700">
+                          {item.order_code}
+                        </td>
+                        <td className="p-4 text-gray-600">
+                          {new Date(item.created_at).toLocaleDateString(
+                            "id-ID"
+                          )}
+                        </td>
+                        <td className="p-4 text-gray-800 font-semibold">
+                          {item.customer_name}
+                        </td>
+                        <td className="p-4 text-right font-bold text-green-600">
+                          {formatRupiah(item.total_amount)}
+                        </td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                              item.status === "Selesai"
+                                ? "bg-green-100 text-green-800"
+                                : item.status === "Dibatalkan"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="text-center py-10 text-gray-500"
+                      >
+                        Tidak ada data untuk periode ini.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Prev
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i + 1)}
+                    className={`px-3 py-1 rounded-md ${
+                      currentPage === i + 1
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

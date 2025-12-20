@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import axios from "axios";
 import Sidebar from "../../components/sidebar";
+import { FaBars } from "react-icons/fa";
 
 const formatRupiah = (number) =>
   new Intl.NumberFormat("id-ID", {
@@ -14,6 +15,7 @@ const formatRupiah = (number) =>
 export default function EditMenu() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
 
   const [menuData, setMenuData] = useState({
@@ -27,10 +29,18 @@ export default function EditMenu() {
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); // 1. STATE BARU
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchMenuData();
   }, []);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  const openSidebar = () => setIsSidebarOpen(true);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   const fetchMenuData = async () => {
     try {
@@ -100,161 +110,217 @@ export default function EditMenu() {
     }
   };
 
-  if (loading) return <div className="p-10">Memuat data...</div>;
+  if (loading)
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <div className="flex min-h-screen flex-col lg:flex-row">
+          <div className="hidden lg:flex">
+            <Sidebar />
+          </div>
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+              onClick={closeSidebar}
+            />
+          )}
+          <div
+            className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-yellow-500 shadow-2xl transition-transform duration-300 lg:hidden ${
+              isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <Sidebar />
+          </div>
+          <div className="flex-1 flex items-center justify-center px-6 py-12">
+            <p className="text-gray-700">Memuat data...</p>
+          </div>
+        </div>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen flex">
-      <Sidebar />
-      <main className="flex-1 p-8 bg-gray-100 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Edit Menu</h2>
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white shadow-lg rounded-xl p-6 md:p-8 space-y-6 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-6 md:gap-y-8"
-            encType="multipart/form-data"
-          >
-            <div className="md:col-span-1">
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Nama Menu
-              </label>
-              <input
-                type="text"
-                name="name"
-                id="name"
-                value={menuData.name}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
+    <div className="min-h-screen bg-gray-100">
+      <div className="flex min-h-screen flex-col lg:flex-row">
+        <div className="hidden lg:flex">
+          <Sidebar />
+        </div>
+        <div
+          className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-yellow-500 shadow-2xl transition-transform duration-300 lg:hidden ${
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <Sidebar />
+        </div>
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+            onClick={closeSidebar}
+          />
+        )}
+
+        <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+          <div className="mx-auto w-full max-w-4xl">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-yellow-500 text-white shadow-lg transition hover:bg-yellow-600 lg:hidden"
+                  onClick={openSidebar}
+                  aria-label="Buka menu admin"
+                >
+                  <FaBars />
+                </button>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                  Edit Menu
+                </h2>
+              </div>
             </div>
-            <div className="md:col-span-1">
-              <label
-                htmlFor="price"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Harga (Rp)
-              </label>
-              <input
-                type="number"
-                name="price"
-                id="price"
-                value={menuData.price}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <p className="text-gray-500 text-sm mt-1">
-                {formatRupiah(menuData.price)}
-              </p>
-            </div>
-            <div className="md:col-span-1">
-              <label
-                htmlFor="category"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Kategori
-              </label>
-              <input
-                type="text"
-                id="category"
-                value={menuData.category_name || "-"}
-                disabled
-                className="w-full border border-gray-300 rounded-lg p-3 bg-gray-100 text-gray-600 cursor-not-allowed"
-              />
-            </div>
-            <div className="md:col-span-3">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Deskripsi
-              </label>
-              <textarea
-                name="description"
-                id="description"
-                value={menuData.description}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows="4"
-              />
-            </div>
-            <div className="md:col-span-3 md:grid md:grid-cols-2 md:gap-6 items-start space-y-6 md:space-y-0">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gambar Menu
+            <form
+              onSubmit={handleSubmit}
+              className="grid gap-6 rounded-xl bg-white p-6 shadow-lg sm:p-8 md:grid-cols-3 md:gap-x-6 md:gap-y-8"
+              encType="multipart/form-data"
+            >
+              <div className="md:col-span-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Nama Menu
                 </label>
-                <div className="flex items-center gap-4">
-                  {preview ? (
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      className="w-28 h-28 md:w-40 md:h-40 object-cover rounded-xl border border-gray-200 shadow-sm"
-                    />
-                  ) : (
-                    <div className="w-28 h-28 md:w-40 md:h-40 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-                      No Image
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  value={menuData.name}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div className="md:col-span-1">
+                <label
+                  htmlFor="price"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Harga (Rp)
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  id="price"
+                  value={menuData.price}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <p className="text-gray-500 text-sm mt-1">
+                  {formatRupiah(menuData.price)}
+                </p>
+              </div>
+              <div className="md:col-span-1">
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Kategori
+                </label>
+                <input
+                  type="text"
+                  id="category"
+                  value={menuData.category_name || "-"}
+                  disabled
+                  className="w-full border border-gray-300 rounded-lg p-3 bg-gray-100 text-gray-600 cursor-not-allowed"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Deskripsi
+                </label>
+                <textarea
+                  name="description"
+                  id="description"
+                  value={menuData.description}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-lg p-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows="4"
+                />
+              </div>
+              <div className="md:col-span-3 grid gap-6 md:grid-cols-2 md:items-start">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Gambar Menu
+                  </label>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    {preview ? (
+                      <img
+                        src={preview}
+                        alt="Preview"
+                        className="w-28 h-28 md:w-40 md:h-40 object-cover rounded-xl border border-gray-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-28 h-28 md:w-40 md:h-40 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
+                        No Image
+                      </div>
+                    )}
+                    <div>
+                      <label
+                        htmlFor="image-upload"
+                        className="inline-block bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm cursor-pointer transition-colors"
+                      >
+                        Ubah Gambar
+                      </label>
+                      <input
+                        type="file"
+                        id="image-upload"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-gray-500 mt-2">
+                        Ganti gambar jika perlu.
+                      </p>
                     </div>
-                  )}
-                  <div>
-                    <label
-                      htmlFor="image-upload"
-                      className="inline-block bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm cursor-pointer transition-colors"
-                    >
-                      Ubah Gambar
-                    </label>
+                  </div>
+                </div>
+                <div className="pt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status Menu
+                  </label>
+                  <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <input
-                      type="file"
-                      id="image-upload"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
+                      type="checkbox"
+                      name="is_active"
+                      id="is_active"
+                      checked={menuData.is_active}
+                      onChange={handleChange}
+                      className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-2">
-                      Ganti gambar jika perlu.
-                    </p>
+                    <label
+                      htmlFor="is_active"
+                      className="font-medium text-gray-700"
+                    >
+                      Menu ini Aktif
+                    </label>
                   </div>
                 </div>
               </div>
-              <div className="pt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status Menu
-                </label>
-                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <input
-                    type="checkbox"
-                    name="is_active"
-                    id="is_active"
-                    checked={menuData.is_active}
-                    onChange={handleChange}
-                    className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor="is_active"
-                    className="font-medium text-gray-700"
-                  >
-                    Menu ini Aktif
-                  </label>
-                </div>
+              {/* --- 3. TOMBOL DIPERBARUI --- */}
+              <div className="md:col-span-3 flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 ${
+                    isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {isSubmitting ? "Memproses..." : "Simpan Perubahan"}
+                </button>
               </div>
-            </div>
-            {/* --- 3. TOMBOL DIPERBARUI --- */}
-            <div className="md:col-span-3 flex justify-end pt-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 ${
-                  isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {isSubmitting ? "Memproses..." : "Simpan Perubahan"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </main>
+            </form>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
