@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import zian from "../assets/zian.jpg";
 import khairi from "../assets/khairi.jpeg";
+import agra from "../assets/agra.jpeg";
+import rassya from "../assets/rassya.jpeg";
 
 // --- Komponen Ikon SVG (Tidak berubah) ---
 const CheckIcon = () => (
@@ -103,7 +105,7 @@ export default function AboutPage() {
     {
       name: "Muhammad Rassya",
       role: "Head Chef",
-      image: "https://placehold.co/600x800/F1C40F/white?text=Rassya",
+      image: rassya,
     },
     {
       name: "Aditya Zianur",
@@ -113,7 +115,7 @@ export default function AboutPage() {
     {
       name: "Raditya Agra",
       role: "Customer Relations",
-      image: "https://placehold.co/600x800/E74C3C/white?text=Raditya",
+      image: agra,
     },
     {
       name: "Khairiansyah Hafizh",
