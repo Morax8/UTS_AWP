@@ -228,7 +228,7 @@ export default function LaporanPage() {
                 <FaBars />
               </button>
               <h2 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold text-gray-800">
-                <FaListAlt /> Laporan Penjualan
+                Laporan Penjualan
               </h2>
             </div>
             <button
