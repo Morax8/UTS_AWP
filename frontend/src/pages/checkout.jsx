@@ -3,7 +3,7 @@ import { useCart } from "../context/cartContext";
 import { useAuth } from "../context/authContext";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import qr from "../assets/qr.png";
+import qr from "../assets/qr.jpg";
 
 // --- Komponen Ikon SVG untuk Form ---
 const UserIcon = () => (
