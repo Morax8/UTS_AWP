@@ -81,6 +81,14 @@ export default function AddMenuPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const confirmed = window.confirm(
+      "Apakah Anda yakin ingin menyimpan menu baru ini?"
+    );
+    if (!confirmed) {
+      return;
+    }
+
     setIsSaving(true);
     setError("");
 

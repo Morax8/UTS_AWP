@@ -97,6 +97,7 @@ export default function RegisterPage() {
     phone: "",
     address: "",
   });
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -112,12 +113,45 @@ export default function RegisterPage() {
     setError("");
     setSuccess("");
 
+    const trimmedData = {
+      ...formData,
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      address: formData.address.trim(),
+    };
+
+    if (!trimmedData.name || !trimmedData.email || !trimmedData.password) {
+      setError("Pastikan semua kolom terisi.");
+      setLoading(false);
+      return;
+    }
+
+    if (trimmedData.password.length < 6) {
+      setError("Password minimal 6 karakter.");
+      setLoading(false);
+      return;
+    }
+
+    if (trimmedData.password !== confirmPassword) {
+      setError("Konfirmasi password tidak sama.");
+      setLoading(false);
+      return;
+    }
+
+    const phoneRegex = /^\+?\d{9,15}$/;
+    if (!phoneRegex.test(trimmedData.phone)) {
+      setError("Nomor telepon tidak valid.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "";
       const response = await fetch(`${apiUrl}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(trimmedData),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -192,8 +226,25 @@ export default function RegisterPage() {
               value={formData.password}
               onChange={handleChange}
               required
+              minLength={6}
               className="w-full pl-12 pr-4 py-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-yellow-400 focus:bg-white focus:border-yellow-400 outline-none transition"
               placeholder="Password"
+            />
+          </div>
+          {/* Input Konfirmasi Password */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <LockIcon />
+            </div>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+              className="w-full pl-12 pr-4 py-3 bg-gray-100 border-2 border-transparent rounded-lg focus:ring-2 focus:ring-yellow-400 focus:bg-white focus:border-yellow-400 outline-none transition"
+              placeholder="Konfirmasi Password"
             />
           </div>
 
