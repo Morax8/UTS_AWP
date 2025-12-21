@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS orders (
   customer_address TEXT NOT NULL,
   total_amount DECIMAL(10,2) NOT NULL,
   status ENUM('pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled') DEFAULT 'pending',
+  payment_method ENUM('transfer_bank', 'qris', 'cash') DEFAULT 'transfer_bank',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );

@@ -70,6 +70,7 @@ export default function CheckoutPage() {
     customerPhone: "",
     customerAddress: "",
   });
+  const [paymentMethod, setPaymentMethod] = useState("transfer_bank");
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [error, setError] = useState(null);
@@ -144,6 +145,7 @@ export default function CheckoutPage() {
         unit_price: item.price,
       })),
       user_id: user ? user.id : null,
+      payment_method: paymentMethod,
     };
 
     try {
@@ -246,7 +248,59 @@ export default function CheckoutPage() {
                   ></textarea>
                 </div>
               </div>
-              {/* --- BATAS PERBAIKAN --- */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Metode Pembayaran
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label
+                    className={`flex items-center gap-3 border rounded-xl p-4 cursor-pointer transition shadow-sm hover:shadow-md focus-within:ring-2 focus-within:ring-yellow-500 ${
+                      paymentMethod === "transfer_bank"
+                        ? "border-yellow-400 bg-yellow-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="transfer_bank"
+                      checked={paymentMethod === "transfer_bank"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="h-4 w-4 text-yellow-500 focus:ring-yellow-500"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        Transfer Bank
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Pembayaran melalui rekening bank yang tersedia
+                      </p>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-center gap-3 border rounded-xl p-4 cursor-pointer transition shadow-sm hover:shadow-md focus-within:ring-2 focus-within:ring-yellow-500 ${
+                      paymentMethod === "qris"
+                        ? "border-yellow-400 bg-yellow-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="qris"
+                      checked={paymentMethod === "qris"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="h-4 w-4 text-yellow-500 focus:ring-yellow-500"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-800">QRIS</p>
+                      <p className="text-xs text-gray-500">
+                        Scan kode QR untuk pembayaran instan
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
 
               {error && (
                 <p className="text-red-600 text-sm bg-red-100 p-3 rounded-md">
