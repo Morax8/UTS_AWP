@@ -13,4 +13,6 @@
 		DB:MySQL (using Aiven for hosting the database)
 		Storage: cloudinary (storing images)
 
-notes: ketika sudah lama tidak di akses, backend akan mati dan ketika akses web akan ada delay selama 30 - 50 detik
+notes: 
+	1. ketika sudah lama tidak di akses, backend akan mati dan ketika akses web akan ada delay selama 30 - 50 detik
+	2. untuk file sql ada di dalam folder backend
