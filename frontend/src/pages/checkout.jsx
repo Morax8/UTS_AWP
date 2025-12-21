@@ -300,6 +300,47 @@ export default function CheckoutPage() {
                     </div>
                   </label>
                 </div>
+                <div className="mt-4 space-y-3">
+                  {paymentMethod === "transfer_bank" && (
+                    <div className="border border-yellow-300 bg-yellow-50 rounded-xl p-4 shadow-sm">
+                      <p className="text-sm font-semibold text-gray-800 mb-1">
+                        Transfer ke Rekening BCA
+                      </p>
+                      <div className="space-y-1 text-sm text-gray-700">
+                        <p>
+                          <span className="font-semibold">No. Rekening:</span>{" "}
+                          123 4567 8910
+                        </p>
+                        <p>
+                          <span className="font-semibold">Atas Nama:</span> PT
+                          KateringKU
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Mohon menunggu konfirmasi pihak KateringKU untuk
+                          memastikan pembayaran berhasil
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {paymentMethod === "qris" && (
+                    <div className="border border-purple-300 bg-purple-50 rounded-xl p-4 shadow-sm text-center">
+                      <p className="text-sm font-semibold text-gray-800 mb-3">
+                        Scan QRIS Berikut untuk Melanjutkan Pembayaran
+                      </p>
+                      <div className="flex justify-center">
+                        <img
+                          src="https://via.placeholder.com/220x220.png?text=QRIS+PT+KateringKU"
+                          alt="QRIS PT KateringKU"
+                          className="w-44 h-44 rounded-lg border border-gray-200 shadow-inner"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-3">
+                        Setelah pembayaran berhasil, simpan bukti transaksi
+                        Anda.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {error && (
