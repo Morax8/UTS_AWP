@@ -3,6 +3,7 @@ import { useCart } from "../context/cartContext";
 import { useAuth } from "../context/authContext";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import qr from "../assets/qr.png";
 
 // --- Komponen Ikon SVG untuk Form ---
 const UserIcon = () => (
@@ -329,7 +330,7 @@ export default function CheckoutPage() {
                       </p>
                       <div className="flex justify-center">
                         <img
-                          src="https://via.placeholder.com/220x220.png?text=QRIS+PT+KateringKU"
+                          src={qr}
                           alt="QRIS PT KateringKU"
                           className="w-44 h-44 rounded-lg border border-gray-200 shadow-inner"
                         />
