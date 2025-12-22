@@ -82,6 +82,14 @@ export default function EditMenu() {
   // 2. FUNGSI HANDLE SUBMIT DIPERBARUI
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const confirmed = window.confirm(
+      "Apakah Anda yakin ingin menyimpan perubahan menu ini?"
+    );
+    if (!confirmed) {
+      return;
+    }
+
     setIsSubmitting(true); // <-- Set loading jadi true
     try {
       const token = localStorage.getItem("authToken");

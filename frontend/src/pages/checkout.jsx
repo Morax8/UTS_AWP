@@ -3,6 +3,7 @@ import { useCart } from "../context/cartContext";
 import { useAuth } from "../context/authContext";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import qr from "../assets/qr.jpg";
 
 // --- Komponen Ikon SVG untuk Form ---
 const UserIcon = () => (
@@ -70,6 +71,7 @@ export default function CheckoutPage() {
     customerPhone: "",
     customerAddress: "",
   });
+  const [paymentMethod, setPaymentMethod] = useState("transfer_bank");
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [error, setError] = useState(null);
@@ -144,6 +146,7 @@ export default function CheckoutPage() {
         unit_price: item.price,
       })),
       user_id: user ? user.id : null,
+      payment_method: paymentMethod,
     };
 
     try {
@@ -246,7 +249,100 @@ export default function CheckoutPage() {
                   ></textarea>
                 </div>
               </div>
-              {/* --- BATAS PERBAIKAN --- */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Metode Pembayaran
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label
+                    className={`flex items-center gap-3 border rounded-xl p-4 cursor-pointer transition shadow-sm hover:shadow-md focus-within:ring-2 focus-within:ring-yellow-500 ${
+                      paymentMethod === "transfer_bank"
+                        ? "border-yellow-400 bg-yellow-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="transfer_bank"
+                      checked={paymentMethod === "transfer_bank"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="h-4 w-4 text-yellow-500 focus:ring-yellow-500"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        Transfer Bank
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Pembayaran melalui rekening bank yang tersedia
+                      </p>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-center gap-3 border rounded-xl p-4 cursor-pointer transition shadow-sm hover:shadow-md focus-within:ring-2 focus-within:ring-yellow-500 ${
+                      paymentMethod === "qris"
+                        ? "border-yellow-400 bg-yellow-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="qris"
+                      checked={paymentMethod === "qris"}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="h-4 w-4 text-yellow-500 focus:ring-yellow-500"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-800">QRIS</p>
+                      <p className="text-xs text-gray-500">
+                        Scan kode QR untuk pembayaran instan
+                      </p>
+                    </div>
+                  </label>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {paymentMethod === "transfer_bank" && (
+                    <div className="border border-yellow-300 bg-yellow-50 rounded-xl p-4 shadow-sm">
+                      <p className="text-sm font-semibold text-gray-800 mb-1">
+                        Transfer ke Rekening BCA
+                      </p>
+                      <div className="space-y-1 text-sm text-gray-700">
+                        <p>
+                          <span className="font-semibold">No. Rekening:</span>{" "}
+                          123 4567 8910
+                        </p>
+                        <p>
+                          <span className="font-semibold">Atas Nama:</span> PT
+                          KateringKU
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Mohon menunggu konfirmasi pihak KateringKU untuk
+                          memastikan pembayaran berhasil
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {paymentMethod === "qris" && (
+                    <div className="border border-purple-300 bg-purple-50 rounded-xl p-4 shadow-sm text-center">
+                      <p className="text-sm font-semibold text-gray-800 mb-3">
+                        Scan QRIS Berikut untuk Melanjutkan Pembayaran
+                      </p>
+                      <div className="flex justify-center">
+                        <img
+                          src={qr}
+                          alt="QRIS PT KateringKU"
+                          className="w-44 h-44 rounded-lg border border-gray-200 shadow-inner"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-3">
+                        Setelah pembayaran berhasil, simpan bukti transaksi
+                        Anda.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {error && (
                 <p className="text-red-600 text-sm bg-red-100 p-3 rounded-md">

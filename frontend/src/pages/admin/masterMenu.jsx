@@ -14,6 +14,8 @@ import {
 } from "react-icons/fa";
 import Sidebar from "../../components/sidebar";
 import axios from "axios";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 // Fungsi format mata uang
 const formatRupiah = (number) =>
@@ -69,6 +71,45 @@ export default function MasterMenu() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExportExcel = () => {
+    if (visibleItems.length === 0) {
+      alert("Tidak ada data untuk diekspor.");
+      return;
+    }
+
+    const rows = visibleItems.map((item, index) => ({
+      No: index + 1,
+      "Nama Menu": item.name,
+      Kategori: item.category_name,
+      Harga: formatRupiah(item.price),
+      Status: item.is_active ? "Aktif" : "Tidak Aktif",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows, { origin: "A2" });
+    XLSX.utils.sheet_add_aoa(worksheet, [["Data Master Menu"]], {
+      origin: "A1",
+    });
+    worksheet["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+    worksheet["!cols"] = [
+      { wch: 5 },
+      { wch: 35 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 15 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Master Menu");
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    saveAs(blob, "Master_Menu.xlsx");
   };
 
   useEffect(() => {
@@ -166,12 +207,20 @@ export default function MasterMenu() {
               </h2>
             </div>
 
-            <button
-              onClick={() => navigate("/admin/master-menu/add")}
-              className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
-            >
-              <FaPlus /> Tambah Menu
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-blue-600"
+              >
+                <FaClipboardList /> Export Excel
+              </button>
+              <button
+                onClick={() => navigate("/admin/master-menu/add")}
+                className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-green-600"
+              >
+                <FaPlus /> Tambah Menu
+              </button>
+            </div>
           </header>
           {/* --- 3. UI BARU UNTUK FILTER & SEARCH --- */}
           <div className="mb-6 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-lg sm:flex-row">

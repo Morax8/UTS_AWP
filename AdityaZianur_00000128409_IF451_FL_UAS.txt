@@ -1,0 +1,18 @@
+1. Website link: https://kateringku.onrender.com
+2. user login admin : admin@admin.com | admin123 (untuk sebagai user biasa, bisa daftar sendiri di halaman register)
+3. Group member : 
+	1. Aditya Zianur Rahman Setiadi (00000128409) roles :Fullstack(frontend and backend) and deploy to hosting
+	2. Khairiansyah Hafizh (00000128661) roles : designing the UI/UX and collecting data for the web
+	3. Muhammad Rassya (00000138554) roles : Frontend
+	4. Raditya Agra  (00000138599) roles : Frontend
+4. GitHub Link: https://github.com/Morax8/UTS_AWP (same link as UTS)
+5. Tech Stack:
+	 	Frontend: React
+		Backend: Express
+		Hosting: Render
+		DB:MySQL (using Aiven for hosting the database)
+		Storage: cloudinary (storing images)
+6. Link youtube jika ada error : https://youtu.be/B1Wh-Wz3tB0?si=jh390NKwkEkNUSjk
+7. Additional information: 
+	1. ketika sudah lama tidak di akses, backend akan mati dan ketika akses web akan ada delay selama 30 - 50 detik
+	2. untuk file sql ada di dalam folder backend

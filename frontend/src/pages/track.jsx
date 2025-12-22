@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
-import { FaSearch, FaBox, FaTruck, FaCheckCircle } from "react-icons/fa";
+import {
+  FaSearch,
+  FaBox,
+  FaTruck,
+  FaCheckCircle,
+  FaHistory,
+} from "react-icons/fa";
+import { useAuth } from "../context/authContext";
 
 // --- Komponen Timeline Status (tidak diubah) ---
 const StatusTimeline = ({ currentStatus }) => {
@@ -71,12 +78,45 @@ const StatusTimeline = ({ currentStatus }) => {
 export default function TrackPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const { user, token } = useAuth();
   const [search, setSearch] = useState(searchParams.get("code") || "");
   const [orderData, setOrderData] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [orderHistory, setOrderHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [latestOrder, setLatestOrder] = useState(null);
+  const [autoLoadedLatest, setAutoLoadedLatest] = useState(false);
 
   const successMessage = location.state?.successMessage;
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Pesanan Diterima":
+        return "bg-yellow-100 text-yellow-700";
+      case "Sedang Dimasak":
+        return "bg-orange-100 text-orange-700";
+      case "Dalam Pengantaran":
+        return "bg-blue-100 text-blue-700";
+      case "Selesai":
+        return "bg-green-100 text-green-700";
+      case "Dibatalkan":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const formatItemSummary = (items = []) => {
+    if (!items.length) return "Tidak ada rincian menu.";
+    const preview = items
+      .slice(0, 3)
+      .map((item) => `${item.quantity}x ${item.menu_name}`);
+    return items.length > 3
+      ? `${preview.join(", ")} dan lainnya`
+      : preview.join(", ");
+  };
 
   // --- PERBAIKAN 1: Buat fungsi pencarian yang bisa dipanggil ulang ---
   // Gunakan useCallback agar fungsi tidak dibuat ulang setiap render
@@ -85,6 +125,7 @@ export default function TrackPage() {
       setError("Kolom pencarian tidak boleh kosong.");
       return;
     }
+    setAutoLoadedLatest(false);
     setLoading(true);
     setOrderData(null);
     setError("");
@@ -114,6 +155,64 @@ export default function TrackPage() {
       performSearch(initialCode);
     }
   }, [performSearch, searchParams]); // Jalankan ulang jika parameter URL berubah
+
+  useEffect(() => {
+    if (!user || !token) {
+      setOrderHistory([]);
+      setLatestOrder(null);
+      setHistoryError("");
+      setHistoryLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchHistory = async () => {
+      setHistoryLoading(true);
+      setHistoryError("");
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/orders/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || "Gagal mengambil riwayat pesanan.");
+        }
+        const orders = result.data?.orders || [];
+        setOrderHistory(orders);
+        setLatestOrder(result.data?.latestOrder || null);
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        setHistoryError(err.message || "Gagal mengambil riwayat pesanan.");
+        setOrderHistory([]);
+        setLatestOrder(null);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchHistory();
+
+    return () => controller.abort();
+  }, [token, user]);
+
+  useEffect(() => {
+    const codeFromUrl = searchParams.get("code");
+    if (
+      !codeFromUrl &&
+      latestOrder &&
+      orderData?.order_code !== latestOrder.order_code
+    ) {
+      setOrderData(latestOrder);
+      setSearch(latestOrder.order_code || "");
+      setError("");
+      setAutoLoadedLatest(true);
+    }
+  }, [latestOrder, orderData, searchParams]);
 
   // --- PERBAIKAN 3: Handler untuk form submit ---
   const handleSubmit = (e) => {
@@ -221,12 +320,103 @@ export default function TrackPage() {
             </div>
           </div>
         )}
+        {autoLoadedLatest && orderData && (
+          <p className="mt-4 text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            Menampilkan pesanan terbaru Anda. Pilih riwayat lain atau gunakan
+            pencarian untuk melihat pesanan lainnya.
+          </p>
+        )}
         {!orderData && !error && !loading && (
           <div className="text-center mt-20 text-gray-500">
             <FaBox className="text-7xl text-gray-300 mx-auto mb-4" />
             <p className="text-lg">
               Masukkan kode pesanan Anda untuk memulai pelacakan.
             </p>
+          </div>
+        )}
+        {user && (
+          <div className="mt-12 text-left">
+            <div className="flex items-center gap-2 mb-4">
+              <FaHistory className="text-yellow-500 w-5 h-5" />
+              <h3 className="text-xl font-semibold text-gray-800">
+                Riwayat Pesanan Saya
+              </h3>
+            </div>
+            {historyLoading && (
+              <p className="text-gray-500 bg-white border border-gray-200 rounded-lg p-4">
+                Memuat riwayat pesanan...
+              </p>
+            )}
+            {historyError && (
+              <p className="text-red-600 font-medium bg-red-100 border border-red-200 p-4 rounded-lg">
+                {historyError}
+              </p>
+            )}
+            {!historyLoading && !historyError && orderHistory.length === 0 && (
+              <p className="text-gray-500 bg-white border border-dashed border-gray-200 rounded-lg p-4">
+                Belum ada pesanan yang tercatat.
+              </p>
+            )}
+            <div className="space-y-4">
+              {orderHistory.map((order) => {
+                const isActive = orderData?.id === order.id;
+                const orderDate = order.created_at
+                  ? new Date(order.created_at).toLocaleString("id-ID", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })
+                  : "";
+                return (
+                  <button
+                    key={order.id}
+                    type="button"
+                    onClick={() => {
+                      setOrderData(order);
+                      setSearch(order.order_code || "");
+                      setError("");
+                      setAutoLoadedLatest(false);
+                    }}
+                    className={`w-full text-left bg-white rounded-xl border transition-shadow p-5 shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 ${
+                      isActive
+                        ? "border-yellow-400 shadow-lg"
+                        : "border-transparent"
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-gray-500">
+                          #{order.order_code}
+                        </p>
+                        <p className="text-base font-semibold text-gray-800">
+                          {order.customer_name}
+                        </p>
+                        {orderDate && (
+                          <p className="text-xs text-gray-400">{orderDate}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-start sm:items-end gap-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(
+                            order.status
+                          )}`}
+                        >
+                          {order.status}
+                        </span>
+                        <span className="text-lg font-bold text-yellow-600">
+                          Rp
+                          {Number(order.total_amount || 0).toLocaleString(
+                            "id-ID"
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mt-3 text-sm text-gray-600">
+                      {formatItemSummary(order.items)}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

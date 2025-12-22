@@ -9,10 +9,14 @@ const {
   getAllOrders,
   updateOrderStatus,
   deleteOrder,
+  getUserOrderHistory,
 } = require("../controllers/ordersController");
 
 // Rute untuk melacak pesanan
 router.get("/track", trackOrder);
+
+// Rute untuk riwayat pesanan user (perlu login)
+router.get("/me", protect, getUserOrderHistory);
 
 // Rute untuk membuat pesanan baru
 router.post("/", createOrder);

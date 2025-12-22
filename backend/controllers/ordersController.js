@@ -14,7 +14,7 @@ const trackOrder = async (req, res) => {
   try {
     // Langkah 1: Cari data pesanan utama
     const orderQuery = `
-      SELECT id, order_code, customer_name, status, total_amount 
+      SELECT id, order_code, customer_name, status, total_amount, payment_method
       FROM orders 
       WHERE order_code = ? OR customer_name LIKE ?
       LIMIT 1;
@@ -66,6 +66,7 @@ const createOrder = async (req, res) => {
     total_amount,
     items, // Ini adalah array [ { menu_item_id, quantity, unit_price }, ... ]
     user_id, // Opsional, bisa null jika guest
+    payment_method,
   } = req.body;
 
   // Validasi dasar
@@ -81,6 +82,8 @@ const createOrder = async (req, res) => {
       .status(400)
       .json({ success: false, message: "Data pesanan tidak lengkap." });
   }
+
+  const paymentMethod = payment_method || "transfer_bank";
 
   // Generate order_code unik (Contoh: KTG-YYYYMMDD-XXX)
   const date = new Date();
@@ -100,8 +103,8 @@ const createOrder = async (req, res) => {
 
     // 1. Insert ke tabel 'orders'
     const orderQuery = `
-      INSERT INTO orders (order_code, user_id, customer_name, customer_phone, customer_address, total_amount, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (order_code, user_id, customer_name, customer_phone, customer_address, total_amount, status, payment_method) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const [orderResult] = await connection.query(orderQuery, [
       order_code,
@@ -111,6 +114,7 @@ const createOrder = async (req, res) => {
       customer_address,
       total_amount,
       "Pesanan Diterima", // Status awal
+      paymentMethod,
     ]);
 
     const orderId = orderResult.insertId; // Ambil ID dari pesanan yang baru dibuat
@@ -160,6 +164,7 @@ const getAllOrders = async (req, res) => {
         o.customer_name,
         o.total_amount,
         o.status,
+        o.payment_method,
         mi.name AS menu_name,
         oi.quantity
       FROM orders o
@@ -177,6 +182,7 @@ const getAllOrders = async (req, res) => {
           customer_name: row.customer_name,
           total_amount: row.total_amount,
           status: row.status,
+          payment_method: row.payment_method,
           items: [],
         };
       }
@@ -226,10 +232,88 @@ const deleteOrder = async (req, res) => {
   }
 };
 
+// --- FUNGSI UNTUK AMBIL RIWAYAT PESANAN USER ---
+// @route   GET /api/orders/me
+// @access  Private (user login)
+const getUserOrderHistory = async (req, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Tidak terautentikasi." });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `
+        SELECT 
+          o.id AS order_id,
+          o.order_code,
+          o.customer_name,
+          o.status,
+          o.total_amount,
+          o.created_at,
+          o.payment_method,
+          oi.quantity,
+          oi.unit_price,
+          mi.name AS menu_name
+        FROM orders o
+        LEFT JOIN order_items oi ON o.id = oi.order_id
+        LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id
+        WHERE o.user_id = ?
+        ORDER BY o.created_at DESC, o.id DESC;
+      `,
+      [userId]
+    );
+
+    const ordersMap = {};
+
+    rows.forEach((row) => {
+      if (!ordersMap[row.order_id]) {
+        ordersMap[row.order_id] = {
+          id: row.order_id,
+          order_code: row.order_code,
+          customer_name: row.customer_name,
+          total_amount: row.total_amount,
+          status: row.status,
+          created_at: row.created_at,
+          payment_method: row.payment_method,
+          items: [],
+        };
+      }
+
+      if (row.menu_name) {
+        ordersMap[row.order_id].items.push({
+          menu_name: row.menu_name,
+          quantity: row.quantity,
+          unit_price: row.unit_price,
+        });
+      }
+    });
+
+    const orders = Object.values(ordersMap);
+
+    res.json({
+      success: true,
+      data: {
+        latestOrder: orders.length > 0 ? orders[0] : null,
+        orders,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user order history:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Gagal mengambil riwayat pesanan." });
+  }
+};
+
 module.exports = {
   trackOrder,
   createOrder,
   getAllOrders,
   updateOrderStatus,
   deleteOrder,
+  getUserOrderHistory,
 };
