@@ -12,7 +12,7 @@
 		Hosting: Render
 		DB:MySQL (using Aiven for hosting the database)
 		Storage: cloudinary (storing images)
-
+6. Link youtube jika ada error : https://youtu.be/B1Wh-Wz3tB0?si=jh390NKwkEkNUSjk
 notes: 
 	1. ketika sudah lama tidak di akses, backend akan mati dan ketika akses web akan ada delay selama 30 - 50 detik
 	2. untuk file sql ada di dalam folder backend
